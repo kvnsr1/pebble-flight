@@ -1,0 +1,42 @@
+{
+  "name": "pebble-flight",
+  "version": "0.1.0",
+  "author": "Pebble Flight",
+  "private": true,
+  "keywords": ["pebble-app"],
+  "dependencies": {},
+  "pebble": {
+    "displayName": "Pebble Flight",
+    "uuid": "e6fc90f6-5f5a-4f34-a18e-76f13a5b2327",
+    "projectType": "native",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": ["emery"],
+    "watchapp": {
+      "watchface": false,
+      "hiddenApp": false,
+      "onlyShownOnCommunication": false
+    },
+    "capabilities": ["configurable"],
+    "messageKeys": {
+      "REQUEST_REFRESH": 0,
+      "FLIGHT_NUMBER": 1,
+      "FLIGHT_DATE": 2,
+      "ORIGIN": 3,
+      "DESTINATION": 4,
+      "DEPARTURE_TIME": 5,
+      "ARRIVAL_TIME": 6,
+      "STATUS_LABEL": 7,
+      "STATUS_LEVEL": 8,
+      "DEPARTURE_GATE": 9,
+      "DEPARTURE_TERMINAL": 10,
+      "ARRIVAL_GATE": 11,
+      "ARRIVAL_TERMINAL": 12,
+      "UPDATED_AT": 13,
+      "ERROR_MESSAGE": 14,
+      "IS_LOADING": 15
+    },
+    "resources": {"media": []}
+  }
+}
+
