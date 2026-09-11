@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pebble Flight Settings</title>
+  <style>
+    :root { color-scheme: light dark; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    body { margin: 0; background: #eef2f6; color: #152238; }
+    main { max-width: 440px; margin: auto; padding: 24px 18px; }
+    h1 { margin: 0 0 8px; }
+    p { color: #526174; line-height: 1.4; }
+    label { display: block; margin: 18px 0 6px; font-weight: 700; }
+    input { box-sizing: border-box; width: 100%; padding: 13px; border: 1px solid #aab5c2; border-radius: 9px; font-size: 17px; background: white; color: #152238; }
+    input:focus { outline: 3px solid rgba(8, 104, 172, .22); border-color: #0868ac; }
+    button { width: 100%; margin-top: 24px; padding: 14px; border: 0; border-radius: 9px; background: #0868ac; color: white; font-size: 18px; font-weight: 700; }
+    small { display: block; margin-top: 8px; color: #68778a; }
+    .notice { padding: 12px; border-radius: 9px; background: #dceaf5; color: #263f58; font-size: 14px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Pebble Flight</h1>
+  <p>Choose a flight. Times shown on the watch use each airport's local time.</p>
+  <form id="settings">
+    <label for="flightNumber">Flight number</label>
+    <input id="flightNumber" required placeholder="AA100" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="12" pattern="[A-Za-z0-9]{2,12}">
+    <label for="flightDate">Departure date</label>
+    <input id="flightDate" type="date" required>
+    <label for="apiKey">FlightAware AeroAPI key</label>
+    <input id="apiKey" type="password" autocomplete="off" placeholder="Paste your AeroAPI key">
+    <small id="keyHelp">Your key is sent only to the Pebble app on this phone and is never placed in this page's URL.</small>
+    <p class="notice">This direct-key setup is intended for a personal prototype. Do not distribute a build containing a shared key; use a server proxy for a public app.</p>
+    <button type="submit">Save flight</button>
+  </form>
+</main>
+<script>
+  var params = new URLSearchParams(location.search);
+  ['flightNumber', 'flightDate'].forEach(function(key) {
+    document.getElementById(key).value = params.get(key) || '';
+  });
+  if (!document.getElementById('flightDate').value) {
+    var now = new Date();
+    var localToday = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+      .toISOString().slice(0, 10);
+    document.getElementById('flightDate').value = localToday;
+  }
+  if (params.get('hasApiKey') === '1') {
+    document.getElementById('apiKey').placeholder = 'Leave blank to keep saved key';
+    document.getElementById('keyHelp').textContent =
+      'A key is already saved on this phone. Leave this blank to keep it, or enter a replacement.';
+  }
+  document.getElementById('settings').addEventListener('submit', function(event) {
+    event.preventDefault();
+    var result = {
+      flightNumber: document.getElementById('flightNumber').value.trim().toUpperCase(),
+      flightDate: document.getElementById('flightDate').value,
+      apiKey: document.getElementById('apiKey').value.trim()
+    };
+    location.href = 'pebblejs://close#' + encodeURIComponent(JSON.stringify(result));
+  });
+</script>
+</body>
+</html>
