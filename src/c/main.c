@@ -147,9 +147,21 @@ static void refresh_timer_callback(void *context) {
 
 static void select_click(ClickRecognizerRef recognizer, void *context) { request_refresh(); }
 
+static void select_long_click(ClickRecognizerRef recognizer, void *context) {
+  DictionaryIterator *out;
+  if (app_message_outbox_begin(&out) == APP_MSG_OK) {
+    dict_write_uint8(out, MESSAGE_KEY_REQUEST_NEXT_FLIGHT, 1);
+    app_message_outbox_send();
+    s_flight.loading = true;
+    s_flight.error[0] = '\0';
+    layer_mark_dirty(s_canvas);
+  }
+}
+
 static void click_config(void *context) {
   window_single_click_subscribe(BUTTON_ID_UP, up_click);
   window_single_click_subscribe(BUTTON_ID_SELECT, select_click);
+  window_long_click_subscribe(BUTTON_ID_SELECT, 700, select_long_click, NULL);
   window_single_click_subscribe(BUTTON_ID_DOWN, down_click);
 }
 
