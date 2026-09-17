@@ -212,28 +212,62 @@ static void draw_aircraft_page(GContext *ctx, GRect bounds) {
 }
 
 static void draw_ticket_icon(GContext *ctx, GRect rect) {
-  graphics_context_set_stroke_color(ctx, GColorBlue);
+  graphics_context_set_stroke_color(ctx, GColorBlack);
   graphics_context_set_stroke_width(ctx, 2);
   graphics_draw_round_rect(ctx, rect, 4);
-  for (int x = rect.origin.x + 7; x < rect.origin.x + rect.size.w - 5; x += 4) {
-    graphics_draw_line(ctx, GPoint(x, rect.origin.y + 8),
-                       GPoint(x, rect.origin.y + rect.size.h - 8));
+  int divider = rect.origin.x + 43;
+  for (int y = rect.origin.y + 4; y < rect.origin.y + rect.size.h - 3; y += 5) {
+    graphics_draw_line(ctx, GPoint(divider, y), GPoint(divider, y + 2));
   }
+  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_fill_circle(ctx, GPoint(rect.origin.x, rect.origin.y + rect.size.h / 2), 3);
+  graphics_fill_circle(ctx, GPoint(rect.origin.x + rect.size.w, rect.origin.y + rect.size.h / 2), 3);
+
+  GPoint plane = GPoint(rect.origin.x + 22, rect.origin.y + 20);
+  graphics_context_set_fill_color(ctx, GColorBlue);
+  graphics_fill_rect(ctx, GRect(plane.x - 12, plane.y - 1, 24, 3), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(plane.x - 1, plane.y - 8, 3, 17), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(plane.x - 7, plane.y - 5, 3, 11), 0, GCornerNone);
+
+  graphics_context_set_stroke_color(ctx, GColorBlack);
+  graphics_draw_rect(ctx, GRect(rect.origin.x + 49, rect.origin.y + 6, 11, 11));
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_rect(ctx, GRect(rect.origin.x + 52, rect.origin.y + 9, 5, 5), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(rect.origin.x + 49, rect.origin.y + 23, 13, 2), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(rect.origin.x + 49, rect.origin.y + 28, 13, 2), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(rect.origin.x + 49, rect.origin.y + 33, 13, 2), 0, GCornerNone);
 }
 
-static void draw_seat_map(GContext *ctx, GRect bounds) {
-  graphics_context_set_stroke_color(ctx, GColorLightGray);
+static void draw_seat(GContext *ctx, int x, bool selected) {
+  GColor fill = selected ? GColorOxfordBlue : GColorLightGray;
+  graphics_context_set_fill_color(ctx, fill);
+  graphics_fill_rect(ctx, GRect(x, 132, 22, 29), 5, GCornersTop);
+  graphics_fill_rect(ctx, GRect(x, 162, 22, 14), 2, GCornersBottom);
+  graphics_fill_rect(ctx, GRect(x - 3, 157, 4, 17), 1, GCornersAll);
+  graphics_fill_rect(ctx, GRect(x + 21, 157, 4, 17), 1, GCornersAll);
+  graphics_fill_rect(ctx, GRect(x + 3, 175, 4, 7), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(x + 16, 175, 4, 7), 0, GCornerNone);
+  graphics_context_set_stroke_color(ctx, selected ? GColorBlack : GColorDarkGray);
+  graphics_context_set_stroke_width(ctx, 1);
+  graphics_draw_round_rect(ctx, GRect(x, 132, 22, 44), 5);
+  graphics_draw_line(ctx, GPoint(x + 4, 158), GPoint(x + 18, 158));
+}
+
+static void draw_seat_map(GContext *ctx) {
+  graphics_context_set_stroke_color(ctx, GColorBlack);
   graphics_context_set_stroke_width(ctx, 2);
-  graphics_draw_round_rect(ctx, GRect(16, 126, 94, 63), 24);
+  graphics_draw_round_rect(ctx, GRect(7, 136, 24, 40), 11);
+  graphics_context_set_stroke_color(ctx, GColorBlue);
+  graphics_draw_round_rect(ctx, GRect(11, 140, 16, 32), 8);
+  graphics_context_set_stroke_width(ctx, 1);
+  graphics_draw_line(ctx, GPoint(13, 164), GPoint(24, 147));
+  graphics_draw_line(ctx, GPoint(16, 169), GPoint(26, 154));
+
   const char *labels[] = {"WINDOW", "MIDDLE", "AISLE"};
-  const int xs[] = {27, 55, 83};
+  const int xs[] = {39, 68, 97};
   for (int i = 0; i < 3; i++) {
     bool selected = strcmp(s_flight.seat_position, labels[i]) == 0;
-    graphics_context_set_fill_color(ctx, selected ? GColorBlue : GColorLightGray);
-    graphics_fill_rect(ctx, GRect(xs[i] - 8, 145, 17, 22), 4, GCornersAll);
-    draw_text(ctx, i == 0 ? "W" : (i == 1 ? "M" : "A"),
-              GRect(xs[i] - 8, 147, 17, 18), fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
-              selected ? GColorWhite : GColorBlack, GTextAlignmentCenter);
+    draw_seat(ctx, xs[i], selected);
   }
 }
 
@@ -247,28 +281,25 @@ static void draw_booking_page(GContext *ctx, GRect bounds) {
             fonts_get_system_font(FONT_KEY_GOTHIC_14), GColorWhite,
             GTextAlignmentCenter);
 
-  draw_ticket_icon(ctx, GRect(12, 65, 43, 43));
-  draw_text(ctx, "BOOKING CODE", GRect(66, 63, 122, 18),
+  draw_ticket_icon(ctx, GRect(8, 66, 68, 40));
+  draw_text(ctx, "BOOKING CODE", GRect(84, 63, 104, 18),
             fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), GColorDarkGray,
             GTextAlignmentLeft);
-  draw_text(ctx, s_flight.booking_code, GRect(66, 79, 122, 30),
-            fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GColorBlue,
+  draw_text(ctx, s_flight.booking_code, GRect(84, 80, 104, 28),
+            fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), GColorBlue,
             GTextAlignmentLeft);
   draw_separator(ctx, 116, bounds.size.w);
 
-  draw_seat_map(ctx, bounds);
-  draw_text(ctx, "SEAT", GRect(122, 127, 66, 18),
+  draw_seat_map(ctx);
+  draw_text(ctx, "SEAT", GRect(132, 127, 56, 18),
             fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), GColorDarkGray,
             GTextAlignmentLeft);
-  draw_text(ctx, s_flight.seat_number, GRect(120, 143, 68, 34),
+  draw_text(ctx, s_flight.seat_number, GRect(130, 143, 58, 34),
             fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK), GColorBlue,
             GTextAlignmentLeft);
-  draw_text(ctx, s_flight.seat_position, GRect(113, 177, 75, 20),
+  draw_text(ctx, s_flight.seat_position, GRect(128, 177, 60, 20),
             fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), GColorBlack,
             GTextAlignmentLeft);
-  draw_text(ctx, "W  M  A", GRect(16, 190, 94, 18),
-            fonts_get_system_font(FONT_KEY_GOTHIC_14), GColorDarkGray,
-            GTextAlignmentCenter);
   draw_text(ctx, "Private • stored on phone", GRect(8, 208, bounds.size.w - 16, 18),
             fonts_get_system_font(FONT_KEY_GOTHIC_14), GColorDarkGray,
             GTextAlignmentCenter);
