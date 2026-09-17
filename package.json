@@ -1,6 +1,6 @@
 {
   "name": "pebble-flight",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Pebble Flight",
   "private": true,
   "keywords": ["pebble-app"],
@@ -37,6 +37,17 @@
       "IS_LOADING": 15,
       "REQUEST_NEXT_FLIGHT": 16
     },
-    "resources": {"media": []}
+    "resources": {
+      "media": [
+        {
+          "type": "bitmap",
+          "name": "IMAGE_MENU_ICON",
+          "file": "images/menu_icon.png",
+          "menuIcon": true,
+          "storageFormat": "png",
+          "memoryFormat": "8Bit"
+        }
+      ]
+    }
   }
 }
