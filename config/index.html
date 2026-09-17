@@ -3,34 +3,172 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#081421">
   <title>Pebble Flight Settings</title>
   <style>
-    :root { color-scheme: light dark; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-    body { margin: 0; background: #eef2f6; color: #152238; }
-    main { max-width: 440px; margin: auto; padding: 24px 18px; }
-    h1 { margin: 0 0 8px; }
-    p { color: #526174; line-height: 1.4; }
-    fieldset { margin: 16px 0; padding: 4px 14px 16px; border: 1px solid #c4cfdb; border-radius: 12px; background: rgba(255,255,255,.65); }
-    legend { padding: 0 7px; color: #263f58; font-size: 15px; font-weight: 800; }
-    label { display: block; margin: 12px 0 6px; font-weight: 700; }
-    input { box-sizing: border-box; width: 100%; padding: 13px; border: 1px solid #aab5c2; border-radius: 9px; font-size: 17px; background: white; color: #152238; }
-    input:focus { outline: 3px solid rgba(8, 104, 172, .22); border-color: #0868ac; }
-    button { width: 100%; margin-top: 24px; padding: 14px; border: 0; border-radius: 9px; background: #0868ac; color: white; font-size: 18px; font-weight: 700; }
-    small { display: block; margin-top: 8px; color: #68778a; line-height: 1.35; }
-    .notice { padding: 12px; border-radius: 9px; background: #dceaf5; color: #263f58; font-size: 14px; }
+    :root {
+      color-scheme: dark;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --ink: #f7fbff;
+      --muted: #9db0c4;
+      --panel: rgba(15, 36, 55, .86);
+      --line: rgba(157, 190, 216, .22);
+      --sky: #42d7ff;
+      --navy: #081421;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(circle at 15% 0%, rgba(27, 113, 157, .34), transparent 34rem),
+        linear-gradient(155deg, #081421 0%, #0a1d2d 58%, #07111c 100%);
+      color: var(--ink);
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .13;
+      background-image: linear-gradient(rgba(255,255,255,.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.18) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: linear-gradient(to bottom, black, transparent 62%);
+    }
+    main { position: relative; width: min(100%, 520px); margin: auto; padding: 24px 18px 40px; }
+    .brand { display: flex; align-items: center; gap: 13px; margin-bottom: 10px; }
+    .brand-mark {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      place-items: center;
+      border: 1px solid rgba(66, 215, 255, .48);
+      border-radius: 14px;
+      background: linear-gradient(145deg, rgba(66,215,255,.22), rgba(66,215,255,.04));
+      box-shadow: 0 12px 30px rgba(0, 0, 0, .25);
+      color: var(--sky);
+      font-size: 22px;
+      transform: rotate(-8deg);
+    }
+    .eyebrow { margin: 0 0 2px; color: var(--sky); font-size: .75rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(1.75rem, 7vw, 2.25rem); letter-spacing: -.04em; }
+    .intro { margin: 8px 0 20px; color: var(--muted); font-size: 1rem; line-height: 1.5; }
+    .flight-card {
+      position: relative;
+      margin: 14px 0;
+      padding: 8px 16px 17px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(21, 51, 76, .96), rgba(12, 31, 48, .96));
+      box-shadow: 0 18px 42px rgba(0, 0, 0, .24);
+      transition: border-color .2s ease, opacity .2s ease, transform .2s ease;
+      animation: arrive .42s both;
+    }
+    .flight-card:nth-child(2) { animation-delay: .06s; }
+    .flight-card:nth-child(3) { animation-delay: .12s; }
+    .flight-card:not(.is-active) { opacity: .66; }
+    .flight-card:focus-within { border-color: rgba(66, 215, 255, .66); transform: translateY(-2px); opacity: 1; }
+    .flight-card::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 70px;
+      height: 4px;
+      border-radius: 0 18px 0 8px;
+      background: var(--accent, var(--sky));
+    }
+    legend { padding: 0 8px 0 0; }
+    .legend-row { display: inline-flex; align-items: center; gap: 8px; color: #dce9f3; font-size: .9rem; font-weight: 800; }
+    .slot {
+      display: grid;
+      width: 25px;
+      height: 25px;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--accent, var(--sky));
+      color: #07111c;
+      font-size: .78rem;
+    }
+    .optional { color: var(--muted); font-size: .75rem; font-weight: 650; }
+    .route-preview { display: grid; grid-template-columns: 54px 1fr 54px; align-items: center; gap: 9px; margin: 10px 0 3px; }
+    .route-code { overflow: hidden; color: var(--ink); font-size: 1.15rem; font-weight: 850; letter-spacing: .03em; text-overflow: ellipsis; white-space: nowrap; }
+    .route-code:last-child { text-align: right; }
+    .route-line { position: relative; height: 18px; }
+    .route-line::before { content: ""; position: absolute; top: 8px; right: 0; left: 0; border-top: 1px dashed rgba(214, 232, 246, .46); }
+    .route-line::after { content: "✈"; position: absolute; top: -4px; left: calc(50% - 9px); color: var(--accent, var(--sky)); font-size: 17px; transform: rotate(3deg); transition: left .35s ease; }
+    .flight-card:focus-within .route-line::after { left: calc(68% - 9px); }
+    .fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+    label { display: block; margin: 12px 0 6px; color: #bfd0de; font-size: .88rem; font-weight: 750; }
+    input {
+      width: 100%;
+      min-height: 48px;
+      padding: 11px 12px;
+      border: 1px solid rgba(174, 203, 225, .25);
+      border-radius: 11px;
+      outline: none;
+      background: rgba(5, 19, 31, .72);
+      color: var(--ink);
+      font: inherit;
+      font-size: 1rem;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    input::placeholder { color: #647a8e; }
+    input:focus { border-color: var(--sky); background: rgba(5, 19, 31, .96); box-shadow: 0 0 0 3px rgba(66, 215, 255, .13); }
+    .key-panel { margin-top: 18px; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: rgba(9, 27, 42, .8); }
+    .key-panel label { margin-top: 0; color: var(--ink); }
+    small { display: block; margin-top: 8px; color: var(--muted); font-size: .8rem; line-height: 1.4; }
+    .notice { display: flex; align-items: center; gap: 10px; margin: 14px 0 0; color: #c7d8e5; font-size: .88rem; line-height: 1.4; }
+    .live-dot { width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%; background: #59e391; box-shadow: 0 0 0 5px rgba(89, 227, 145, .1); animation: pulse 2s infinite; }
+    button {
+      width: 100%;
+      margin-top: 18px;
+      padding: 15px 18px;
+      border: 0;
+      border-radius: 14px;
+      background: linear-gradient(115deg, var(--sky), #77e6ff);
+      box-shadow: 0 14px 34px rgba(32, 171, 211, .24);
+      color: #06131e;
+      font: inherit;
+      font-size: 1rem;
+      font-weight: 850;
+      cursor: pointer;
+      transition: transform .16s ease, box-shadow .16s ease;
+    }
+    button:hover { transform: translateY(-2px); box-shadow: 0 18px 38px rgba(32, 171, 211, .3); }
+    button:active { transform: translateY(1px) scale(.99); }
+    @keyframes arrive { from { opacity: 0; transform: translateY(10px); } }
+    @keyframes pulse { 50% { box-shadow: 0 0 0 8px rgba(89, 227, 145, 0); } }
+    @media (max-width: 390px) {
+      main { padding-inline: 13px; }
+      .fields { grid-template-columns: 1fr; gap: 0; }
+      .flight-card { padding-inline: 13px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
   </style>
 </head>
 <body>
 <main>
-  <h1>Pebble Flight</h1>
-  <p>Add up to three flights. Long-press Select on the watch to move between them.</p>
+  <header class="brand">
+    <div class="brand-mark" aria-hidden="true">✈</div>
+    <div>
+      <p class="eyebrow">Flight deck</p>
+      <h1>Pebble Flight</h1>
+    </div>
+  </header>
+  <p class="intro">Keep your next three trips on your wrist. Long-press Select to move between them.</p>
   <form id="settings">
     <div id="flights"></div>
-    <label for="apiKey">FlightAware AeroAPI key</label>
-    <input id="apiKey" type="password" autocomplete="off" placeholder="Paste your AeroAPI key">
-    <small id="keyHelp">Your key is sent only to the Pebble app on this phone and is never placed in this page's URL.</small>
-    <p class="notice">Only the flight visible on the watch refreshes automatically, keeping AeroAPI usage low.</p>
-    <button type="submit">Save flights</button>
+    <section class="key-panel" aria-labelledby="apiKeyLabel">
+      <label id="apiKeyLabel" for="apiKey">FlightAware AeroAPI key</label>
+      <input id="apiKey" type="password" autocomplete="off" placeholder="Paste your AeroAPI key">
+      <small id="keyHelp">Stored by the Pebble app on this phone—not in this page’s URL.</small>
+      <p class="notice"><span class="live-dot" aria-hidden="true"></span>Only the flight on screen refreshes automatically.</p>
+    </section>
+    <button id="saveButton" type="submit">Save flights &nbsp;→</button>
   </form>
 </main>
 <script>
@@ -39,21 +177,46 @@
   var today = new Date();
   var localToday = new Date(today.getTime() - today.getTimezoneOffset() * 60000)
     .toISOString().slice(0, 10);
+  var accents = ['#42d7ff', '#ffd45c', '#59e391'];
+
+  function previewValue(value, fallback) {
+    return value ? value.toUpperCase() : fallback;
+  }
+
+  function updateCard(index) {
+    var card = document.getElementById('flightCard' + index);
+    var number = document.getElementById('flightNumber' + index).value.trim();
+    var date = document.getElementById('flightDate' + index).value;
+    document.getElementById('routeNumber' + index).textContent = previewValue(number, 'FLIGHT');
+    document.getElementById('routeDate' + index).textContent = date ? date.slice(5).replace('-', '/') : 'DATE';
+    card.classList.toggle('is-active', Boolean(number || index === 1));
+  }
 
   for (var i = 1; i <= 3; i += 1) {
     var fieldset = document.createElement('fieldset');
     var number = params.get('f' + i) || (i === 1 ? params.get('flightNumber') : '') || '';
     var date = params.get('d' + i) || (i === 1 ? params.get('flightDate') : '') || '';
+    fieldset.id = 'flightCard' + i;
+    fieldset.className = 'flight-card';
+    fieldset.style.setProperty('--accent', accents[i - 1]);
     fieldset.innerHTML =
-      '<legend>Flight ' + i + (i === 1 ? '' : ' · optional') + '</legend>' +
-      '<label for="flightNumber' + i + '">Flight number</label>' +
-      '<input id="flightNumber' + i + '" placeholder="' + (i === 1 ? 'AA100' : 'Optional') + '" ' +
-        'autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="12" pattern="[A-Za-z0-9]{2,12}">' +
-      '<label for="flightDate' + i + '">Departure date</label>' +
-      '<input id="flightDate' + i + '" type="date">';
+      '<legend><span class="legend-row"><span class="slot">0' + i + '</span>Flight ' + i +
+        (i === 1 ? '' : ' <span class="optional">optional</span>') + '</span></legend>' +
+      '<div class="route-preview" aria-hidden="true"><span class="route-code" id="routeNumber' + i + '">FLIGHT</span>' +
+        '<span class="route-line"></span><span class="route-code" id="routeDate' + i + '">DATE</span></div>' +
+      '<div class="fields"><div><label for="flightNumber' + i + '">Flight number</label>' +
+        '<input id="flightNumber' + i + '" placeholder="' + (i === 1 ? 'AA100' : 'Optional') + '" ' +
+        'autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="12" pattern="[A-Za-z0-9]{2,12}"></div>' +
+      '<div><label for="flightDate' + i + '">Departure date</label>' +
+        '<input id="flightDate' + i + '" type="date"></div></div>';
     flights.appendChild(fieldset);
     document.getElementById('flightNumber' + i).value = number;
     document.getElementById('flightDate' + i).value = date || (i === 1 ? localToday : '');
+    (function(index) {
+      document.getElementById('flightNumber' + index).addEventListener('input', function() { updateCard(index); });
+      document.getElementById('flightDate' + index).addEventListener('input', function() { updateCard(index); });
+    })(i);
+    updateCard(i);
   }
 
   document.getElementById('flightNumber1').required = true;
@@ -62,7 +225,7 @@
   if (params.get('hasApiKey') === '1') {
     document.getElementById('apiKey').placeholder = 'Leave blank to keep saved key';
     document.getElementById('keyHelp').textContent =
-      'A key is already saved on this phone. Leave this blank to keep it, or enter a replacement.';
+      'A key is already saved. Leave this blank to keep it, or enter a replacement.';
   }
 
   document.getElementById('settings').addEventListener('submit', function(event) {
@@ -91,7 +254,10 @@
       flights: resultFlights,
       apiKey: document.getElementById('apiKey').value.trim()
     };
-    location.href = 'pebblejs://close#' + encodeURIComponent(JSON.stringify(result));
+    document.getElementById('saveButton').textContent = 'Ready for takeoff  ✓';
+    requestAnimationFrame(function() {
+      location.href = 'pebblejs://close#' + encodeURIComponent(JSON.stringify(result));
+    });
   });
 </script>
 </body>
