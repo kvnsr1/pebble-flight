@@ -6,6 +6,7 @@ var CONFIG_URL = 'https://kvnsr1.github.io/pebble-flight/config/';
 var FLIGHTS_KEY = 'pebbleFlight.flights';
 var ACTIVE_KEY = 'pebbleFlight.activeIndex';
 var CACHE_KEY = 'pebbleFlight.flightCache';
+var STATE_KEY = 'pebbleFlight.refreshState';
 var LEGACY_CACHE_KEY = 'pebbleFlight.lastFlight';
 
 function localToday() {
@@ -39,6 +40,37 @@ function savedFlights() {
   }];
 }
 
+function readJson(key) {
+  try { return JSON.parse(localStorage.getItem(key) || '{}'); }
+  catch (ignore) { return {}; }
+}
+
+function writeJson(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function pruneLandedFlights(flights) {
+  var now = Date.now();
+  var states = readJson(STATE_KEY);
+  var cache = readJson(CACHE_KEY);
+  var kept = flights.filter(function(flight) {
+    var state = states[flightKey(flight)];
+    return !state || !state.actualOn || now < state.actualOn + 60 * 60 * 1000;
+  });
+  if (kept.length === flights.length) { return flights; }
+
+  var retained = {};
+  kept.forEach(function(flight) { retained[flightKey(flight)] = true; });
+  Object.keys(states).forEach(function(key) { if (!retained[key]) { delete states[key]; } });
+  Object.keys(cache).forEach(function(key) { if (!retained[key]) { delete cache[key]; } });
+  writeJson(STATE_KEY, states);
+  writeJson(CACHE_KEY, cache);
+  localStorage.setItem(FLIGHTS_KEY, JSON.stringify(kept));
+  var index = parseInt(localStorage.getItem(ACTIVE_KEY), 10) || 0;
+  localStorage.setItem(ACTIVE_KEY, String(Math.min(index, Math.max(0, kept.length - 1))));
+  return kept;
+}
+
 function activeIndex(flights) {
   var index = parseInt(localStorage.getItem(ACTIVE_KEY), 10);
   if (isNaN(index) || index < 0 || index >= flights.length) { index = 0; }
@@ -46,7 +78,7 @@ function activeIndex(flights) {
 }
 
 function settings() {
-  var flights = savedFlights();
+  var flights = pruneLandedFlights(savedFlights());
   return {
     apiKey: localStorage.getItem('aeroApiKey') || '',
     flights: flights,
@@ -63,8 +95,7 @@ function flightKey(flight) {
 }
 
 function readCache() {
-  try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}'); }
-  catch (ignore) { return {}; }
+  return readJson(CACHE_KEY);
 }
 
 function cachedMessage(flight) {
@@ -87,7 +118,22 @@ function cachedMessage(flight) {
 function cacheMessage(flight, message) {
   var cache = readCache();
   cache[flightKey(flight)] = message;
-  localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+  writeJson(CACHE_KEY, cache);
+}
+
+function configuredDepartureMs(flight) {
+  return Date.parse(flight.flightDate + 'T12:00:00');
+}
+
+function immediateFlightKey(config, states) {
+  var candidates = config.flights.filter(function(flight) {
+    return !flightTools.isTerminal(states[flightKey(flight)]);
+  });
+  candidates.sort(function(a, b) {
+    return flightTools.departureMs(states[flightKey(a)], configuredDepartureMs(a)) -
+      flightTools.departureMs(states[flightKey(b)], configuredDepartureMs(b));
+  });
+  return candidates.length ? flightKey(candidates[0]) : '';
 }
 
 function send(payload) {
@@ -108,7 +154,7 @@ function sendPlaceholder(flight) {
     DESTINATION: '---',
     DEPARTURE_TIME: '--',
     ARRIVAL_TIME: '--',
-    STATUS_LABEL: 'REFRESHING',
+    STATUS_LABEL: 'SCHEDULED',
     STATUS_LEVEL: 0,
     DEPARTURE_GATE: '--',
     DEPARTURE_TERMINAL: '--',
@@ -116,7 +162,7 @@ function sendPlaceholder(flight) {
     ARRIVAL_TERMINAL: '--',
     UPDATED_AT: '--',
     ERROR_MESSAGE: '',
-    IS_LOADING: 1
+    IS_LOADING: 0
   });
 }
 
@@ -146,7 +192,7 @@ function dateWindow(date) {
   return {start: start.toISOString(), end: end.toISOString()};
 }
 
-function refresh() {
+function refresh(force) {
   var config = settings();
   var selected = currentFlight(config);
   if (!config.apiKey || !selected) {
@@ -154,8 +200,26 @@ function refresh() {
     return;
   }
 
-  send({IS_LOADING: 1, ERROR_MESSAGE: ''});
   var selectedKey = flightKey(selected);
+  var states = readJson(STATE_KEY);
+  var state = states[selectedKey];
+  if (flightTools.isTerminal(state)) {
+    showCurrent(config);
+    return;
+  }
+  var now = Date.now();
+  var isImmediate = selectedKey === immediateFlightKey(config, states);
+  if (!force && !flightTools.refreshIsDue(
+    state, configuredDepartureMs(selected), isImmediate, now)) {
+    showCurrent(config);
+    return;
+  }
+
+  send({IS_LOADING: 1, ERROR_MESSAGE: ''});
+  state = state || {};
+  state.lastRequestAt = now;
+  states[selectedKey] = state;
+  writeJson(STATE_KEY, states);
   var window = dateWindow(selected.flightDate);
   var url = API_ROOT + '/flights/' + encodeURIComponent(selected.flightNumber) +
     '?start=' + encodeURIComponent(window.start) +
@@ -182,6 +246,9 @@ function refresh() {
         return;
       }
       var message = flightTools.toMessage(flight);
+      var latestStates = readJson(STATE_KEY);
+      latestStates[selectedKey] = flightTools.toRefreshState(flight, now);
+      writeJson(STATE_KEY, latestStates);
       message.IS_LOADING = 0;
       message.ERROR_MESSAGE = '';
       cacheMessage(selected, message);
@@ -205,18 +272,18 @@ function nextFlight() {
   config.activeIndex = (config.activeIndex + 1) % config.flights.length;
   localStorage.setItem(ACTIVE_KEY, String(config.activeIndex));
   showCurrent(config);
-  refresh();
+  refresh(false);
 }
 
 Pebble.addEventListener('ready', function() {
   var config = settings();
   showCurrent(config);
-  refresh();
+  refresh(false);
 });
 
 Pebble.addEventListener('appmessage', function(event) {
   if (event.payload.REQUEST_NEXT_FLIGHT) { nextFlight(); }
-  else if (event.payload.REQUEST_REFRESH) { refresh(); }
+  else if (event.payload.REQUEST_REFRESH) { refresh(event.payload.REQUEST_REFRESH === 1); }
 });
 
 Pebble.addEventListener('showConfiguration', function() {
@@ -244,7 +311,7 @@ Pebble.addEventListener('webviewclosed', function(event) {
     localStorage.setItem(FLIGHTS_KEY, JSON.stringify(flights));
     localStorage.setItem(ACTIVE_KEY, '0');
     showCurrent(settings());
-    refresh();
+    refresh(false);
   } catch (error) {
     sendError('Settings could not be saved');
   }

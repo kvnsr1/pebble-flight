@@ -18,6 +18,49 @@ function epochMs(iso) {
   return iso ? Date.parse(iso) : NaN;
 }
 
+var MINUTE_MS = 60 * 1000;
+var HOUR_MS = 60 * MINUTE_MS;
+var DAY_MS = 24 * HOUR_MS;
+
+function toRefreshState(flight, requestedAt) {
+  return {
+    lastRequestAt: requestedAt,
+    scheduledOut: epochMs(flight.scheduled_out || flight.scheduled_off),
+    estimatedOut: epochMs(flight.estimated_out || flight.estimated_off),
+    actualOut: epochMs(flight.actual_out || flight.actual_off),
+    scheduledIn: epochMs(flight.scheduled_in || flight.scheduled_on),
+    estimatedIn: epochMs(flight.estimated_in || flight.estimated_on),
+    actualOn: epochMs(flight.actual_on || flight.actual_in),
+    cancelled: Boolean(flight.cancelled)
+  };
+}
+
+function departureMs(state, fallback) {
+  if (!state) { return fallback; }
+  return state.estimatedOut || state.scheduledOut || fallback;
+}
+
+function isTerminal(state) {
+  return Boolean(state && (state.cancelled || state.actualOn));
+}
+
+function refreshIntervalMs(state, fallbackDeparture, isImmediate, now) {
+  if (isTerminal(state)) { return null; }
+  if (state && state.actualOut) { return 10 * MINUTE_MS; }
+
+  var remaining = departureMs(state, fallbackDeparture) - now;
+  if (remaining > 7 * DAY_MS) { return null; }
+  if (remaining > DAY_MS) { return isImmediate ? 6 * HOUR_MS : null; }
+  if (remaining > 6 * HOUR_MS) { return HOUR_MS; }
+  return 15 * MINUTE_MS;
+}
+
+function refreshIsDue(state, fallbackDeparture, isImmediate, now) {
+  var interval = refreshIntervalMs(state, fallbackDeparture, isImmediate, now);
+  if (interval === null) { return false; }
+  return !state || !state.lastRequestAt || now - state.lastRequestAt >= interval;
+}
+
 function delayMinutes(flight) {
   var hasDeparted = Boolean(flight.actual_out || flight.actual_off);
   var scheduled = epochMs(hasDeparted ? flight.scheduled_in : flight.scheduled_out);
@@ -82,8 +125,13 @@ function toMessage(flight) {
 
 module.exports = {
   chooseFlight: chooseFlight,
+  departureMs: departureMs,
   delayMinutes: delayMinutes,
+  isTerminal: isTerminal,
   localTime: localTime,
+  refreshIntervalMs: refreshIntervalMs,
+  refreshIsDue: refreshIsDue,
   statusFor: statusFor,
-  toMessage: toMessage
+  toMessage: toMessage,
+  toRefreshState: toRefreshState
 };

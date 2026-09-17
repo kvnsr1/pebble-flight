@@ -26,7 +26,7 @@ static FlightData s_flight;
 static int s_page;
 static int s_loading_frame;
 
-#define REFRESH_INTERVAL_MS (10 * 60 * 1000)
+#define REFRESH_INTERVAL_MS (5 * 60 * 1000)
 
 static GColor status_color(void) {
   switch (s_flight.status_level) {
@@ -197,10 +197,10 @@ static void change_page(int delta) {
 static void up_click(ClickRecognizerRef recognizer, void *context) { change_page(-1); }
 static void down_click(ClickRecognizerRef recognizer, void *context) { change_page(1); }
 
-static void request_refresh(void) {
+static void request_refresh(bool is_manual) {
   DictionaryIterator *out;
   if (app_message_outbox_begin(&out) == APP_MSG_OK) {
-    dict_write_uint8(out, MESSAGE_KEY_REQUEST_REFRESH, 1);
+    dict_write_uint8(out, MESSAGE_KEY_REQUEST_REFRESH, is_manual ? 1 : 2);
     app_message_outbox_send();
     s_flight.loading = true;
     s_flight.error[0] = '\0';
@@ -210,11 +210,11 @@ static void request_refresh(void) {
 }
 
 static void refresh_timer_callback(void *context) {
-  request_refresh();
+  request_refresh(false);
   s_refresh_timer = app_timer_register(REFRESH_INTERVAL_MS, refresh_timer_callback, NULL);
 }
 
-static void select_click(ClickRecognizerRef recognizer, void *context) { request_refresh(); }
+static void select_click(ClickRecognizerRef recognizer, void *context) { request_refresh(true); }
 
 static void select_long_click(ClickRecognizerRef recognizer, void *context) {
   DictionaryIterator *out;

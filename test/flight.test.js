@@ -21,5 +21,17 @@ assert.strictEqual(flight.statusFor(sample(60)).level, 2);
 assert.strictEqual(flight.statusFor(sample(61)).level, 3);
 assert.strictEqual(flight.toMessage(sample(30)).ORIGIN, 'LAX');
 assert.strictEqual(flight.chooseFlight([sample(0)], '2026-09-10').ident_iata, 'AA100');
-console.log('Flight transformation tests passed');
 
+var hour = 60 * 60 * 1000;
+var day = 24 * hour;
+var now = Date.parse('2026-09-10T12:00:00Z');
+assert.strictEqual(flight.refreshIntervalMs(null, now + 8 * day, true, now), null);
+assert.strictEqual(flight.refreshIntervalMs(null, now + 2 * day, false, now), null);
+assert.strictEqual(flight.refreshIntervalMs(null, now + 2 * day, true, now), 6 * hour);
+assert.strictEqual(flight.refreshIntervalMs(null, now + 12 * hour, false, now), hour);
+assert.strictEqual(flight.refreshIntervalMs(null, now + 5 * hour, false, now), 15 * 60 * 1000);
+assert.strictEqual(flight.refreshIntervalMs({actualOut: now}, now, true, now), 10 * 60 * 1000);
+assert.strictEqual(flight.refreshIntervalMs({actualOn: now}, now, true, now), null);
+assert.strictEqual(flight.refreshIntervalMs({cancelled: true}, now, true, now), null);
+assert.strictEqual(flight.refreshIsDue({lastRequestAt: now - hour}, now + 12 * hour, true, now), true);
+console.log('Flight transformation tests passed');

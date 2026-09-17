@@ -74,7 +74,7 @@ For personal testing, the key is stored in the Pebble phone app's local storage 
 - **Long-press Select:** switch to the next saved flight.
 - **Back:** exit.
 
-While the app is open, it refreshes only the visible flight every 10 minutes. Continuous background alerts are a later phase and should use FlightAware Flight Alerts plus a secure push service rather than aggressive polling.
+While the app is open, a lightweight five-minute heartbeat checks whether the visible flight is due for an AeroAPI update. Flights more than seven days away do not auto-refresh. From one to seven days, only the next flight refreshes every six hours; flights refresh hourly in the final 24 hours, every 15 minutes in the final six hours, and every 10 minutes while airborne. Canceled and completed flights stop refreshing, and landed flights leave the list after one hour. Select still forces a manual refresh for non-terminal flights.
 
 ## Delay rules
 
