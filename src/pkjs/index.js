@@ -42,13 +42,6 @@ function savedFlights() {
 function activeIndex(flights) {
   var index = parseInt(localStorage.getItem(ACTIVE_KEY), 10);
   if (isNaN(index) || index < 0 || index >= flights.length) { index = 0; }
-  if (flights[index] && flights[index].flightDate < localToday()) {
-    var upcoming = -1;
-    for (var i = 0; i < flights.length; i += 1) {
-      if (flights[i].flightDate >= localToday()) { upcoming = i; break; }
-    }
-    if (upcoming >= 0) { index = upcoming; }
-  }
   return index;
 }
 
