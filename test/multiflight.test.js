@@ -9,7 +9,7 @@ var sent = [];
 var openedUrl = '';
 var storage = {
   'pebbleFlight.flights': JSON.stringify([
-    {flightNumber: 'aa100', flightDate: '2026-10-01'},
+    {flightNumber: 'aa100', flightDate: '2026-10-01', bookingCode: 'ABC123', seatNumber: '12A', seatPosition: 'window'},
     {flightNumber: 'UA200', flightDate: '2026-10-02'},
     {flightNumber: 'DL300', flightDate: '2026-10-03'},
     {flightNumber: 'WN400', flightDate: '2026-10-04'}
@@ -45,8 +45,11 @@ var context = {
 vm.runInNewContext(fs.readFileSync('src/pkjs/index.js', 'utf8'), context);
 
 handlers.showConfiguration();
-assert.ok(openedUrl.indexOf('f1=AA100') >= 0);
-assert.ok(openedUrl.indexOf('f3=DL300') >= 0);
+var configState = JSON.parse(decodeURIComponent(openedUrl.split('#state=')[1]));
+assert.strictEqual(configState.flights[0].flightNumber, 'AA100');
+assert.strictEqual(configState.flights[0].bookingCode, 'ABC123');
+assert.strictEqual(configState.flights[0].seatPosition, 'window');
+assert.strictEqual(configState.flights[2].flightNumber, 'DL300');
 assert.strictEqual(openedUrl.indexOf('WN400'), -1);
 
 handlers.appmessage({payload: {REQUEST_NEXT_FLIGHT: 1}});
@@ -57,7 +60,7 @@ handlers.webviewclosed({
   response: encodeURIComponent(JSON.stringify({
     apiKey: '',
     flights: [
-      {flightNumber: 'AS1', flightDate: '2026-11-01'},
+      {flightNumber: 'AS1', flightDate: '2026-11-01', bookingCode: 'NEW456', seatNumber: '8C', seatPosition: 'aisle'},
       {flightNumber: 'AS2', flightDate: '2026-11-02'},
       {flightNumber: 'AS3', flightDate: '2026-11-03'},
       {flightNumber: 'AS4', flightDate: '2026-11-04'}
@@ -65,6 +68,7 @@ handlers.webviewclosed({
   }))
 });
 assert.strictEqual(JSON.parse(storage['pebbleFlight.flights']).length, 3);
+assert.strictEqual(JSON.parse(storage['pebbleFlight.flights'])[0].seatPosition, 'aisle');
 assert.strictEqual(storage['pebbleFlight.activeIndex'], '0');
 
 console.log('Multi-flight settings tests passed');

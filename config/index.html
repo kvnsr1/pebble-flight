@@ -101,7 +101,7 @@
     .flight-card:focus-within .route-line::after { left: calc(68% - 9px); }
     .fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
     label { display: block; margin: 12px 0 6px; color: #bfd0de; font-size: .88rem; font-weight: 750; }
-    input {
+    input, select {
       width: 100%;
       min-height: 48px;
       padding: 11px 12px;
@@ -115,7 +115,7 @@
       transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
     }
     input::placeholder { color: #647a8e; }
-    input:focus { border-color: var(--sky); background: rgba(5, 19, 31, .96); box-shadow: 0 0 0 3px rgba(66, 215, 255, .13); }
+    input:focus, select:focus { border-color: var(--sky); background: rgba(5, 19, 31, .96); box-shadow: 0 0 0 3px rgba(66, 215, 255, .13); }
     .key-panel { margin-top: 18px; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: rgba(9, 27, 42, .8); }
     .key-panel label { margin-top: 0; color: var(--ink); }
     small { display: block; margin-top: 8px; color: var(--muted); font-size: .8rem; line-height: 1.4; }
@@ -173,6 +173,11 @@
 </main>
 <script>
   var params = new URLSearchParams(location.search);
+  var initialState = {};
+  if (location.hash.indexOf('#state=') === 0) {
+    try { initialState = JSON.parse(decodeURIComponent(location.hash.slice(7))); }
+    catch (ignore) { initialState = {}; }
+  }
   var flights = document.getElementById('flights');
   var today = new Date();
   var localToday = new Date(today.getTime() - today.getTimezoneOffset() * 60000)
@@ -194,8 +199,11 @@
 
   for (var i = 1; i <= 3; i += 1) {
     var fieldset = document.createElement('fieldset');
-    var number = params.get('f' + i) || (i === 1 ? params.get('flightNumber') : '') || '';
-    var date = params.get('d' + i) || (i === 1 ? params.get('flightDate') : '') || '';
+    var savedFlight = initialState.flights && initialState.flights[i - 1] || {};
+    var number = savedFlight.flightNumber || params.get('f' + i) ||
+      (i === 1 ? params.get('flightNumber') : '') || '';
+    var date = savedFlight.flightDate || params.get('d' + i) ||
+      (i === 1 ? params.get('flightDate') : '') || '';
     fieldset.id = 'flightCard' + i;
     fieldset.className = 'flight-card';
     fieldset.style.setProperty('--accent', accents[i - 1]);
@@ -208,10 +216,23 @@
         '<input id="flightNumber' + i + '" placeholder="' + (i === 1 ? 'AA100' : 'Optional') + '" ' +
         'autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="12" pattern="[A-Za-z0-9]{2,12}"></div>' +
       '<div><label for="flightDate' + i + '">Departure date</label>' +
-        '<input id="flightDate' + i + '" type="date"></div></div>';
+        '<input id="flightDate' + i + '" type="date"></div></div>' +
+      '<div class="fields"><div><label for="bookingCode' + i + '">Booking code</label>' +
+        '<input id="bookingCode' + i + '" placeholder="Optional" autocapitalize="characters" autocomplete="off" ' +
+        'spellcheck="false" maxlength="12"></div>' +
+      '<div><label for="seatNumber' + i + '">Seat number</label>' +
+        '<input id="seatNumber' + i + '" placeholder="12A" autocapitalize="characters" autocomplete="off" ' +
+        'spellcheck="false" maxlength="6"></div></div>' +
+      '<div><label for="seatPosition' + i + '">Seat position</label>' +
+        '<select id="seatPosition' + i + '"><option value="">Choose position</option>' +
+        '<option value="window">Window</option><option value="middle">Middle</option>' +
+        '<option value="aisle">Aisle</option></select></div>';
     flights.appendChild(fieldset);
     document.getElementById('flightNumber' + i).value = number;
     document.getElementById('flightDate' + i).value = date || (i === 1 ? localToday : '');
+    document.getElementById('bookingCode' + i).value = savedFlight.bookingCode || '';
+    document.getElementById('seatNumber' + i).value = savedFlight.seatNumber || '';
+    document.getElementById('seatPosition' + i).value = savedFlight.seatPosition || '';
     (function(index) {
       document.getElementById('flightNumber' + index).addEventListener('input', function() { updateCard(index); });
       document.getElementById('flightDate' + index).addEventListener('input', function() { updateCard(index); });
@@ -222,7 +243,7 @@
   document.getElementById('flightNumber1').required = true;
   document.getElementById('flightDate1').required = true;
 
-  if (params.get('hasApiKey') === '1') {
+  if (initialState.hasApiKey || params.get('hasApiKey') === '1') {
     document.getElementById('apiKey').placeholder = 'Leave blank to keep saved key';
     document.getElementById('keyHelp').textContent =
       'A key is already saved. Leave this blank to keep it, or enter a replacement.';
@@ -234,21 +255,41 @@
     for (var i = 1; i <= 3; i += 1) {
       var numberInput = document.getElementById('flightNumber' + i);
       var dateInput = document.getElementById('flightDate' + i);
+      var bookingInput = document.getElementById('bookingCode' + i);
+      var seatInput = document.getElementById('seatNumber' + i);
+      var positionInput = document.getElementById('seatPosition' + i);
       numberInput.setCustomValidity('');
       dateInput.setCustomValidity('');
+      seatInput.setCustomValidity('');
       var number = numberInput.value.trim().toUpperCase();
       var date = dateInput.value;
+      var bookingCode = bookingInput.value.trim().toUpperCase();
+      var seatNumber = seatInput.value.trim().toUpperCase();
+      var seatPosition = positionInput.value;
       if (number && !date) {
         dateInput.setCustomValidity('Choose a departure date for this flight.');
         dateInput.reportValidity();
         return;
       }
-      if (!number && date) {
-        numberInput.setCustomValidity('Enter a flight number or clear the date.');
+      if (!number && (date || bookingCode || seatNumber || seatPosition)) {
+        numberInput.setCustomValidity('Enter a flight number or clear this flight card.');
         numberInput.reportValidity();
         return;
       }
-      if (number) { resultFlights.push({flightNumber: number, flightDate: date}); }
+      if (seatPosition && !seatNumber) {
+        seatInput.setCustomValidity('Enter a seat number for this position.');
+        seatInput.reportValidity();
+        return;
+      }
+      if (number) {
+        resultFlights.push({
+          flightNumber: number,
+          flightDate: date,
+          bookingCode: bookingCode,
+          seatNumber: seatNumber,
+          seatPosition: seatPosition
+        });
+      }
     }
     var result = {
       flights: resultFlights,

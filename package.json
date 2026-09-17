@@ -1,6 +1,6 @@
 {
   "name": "pebble-flight",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": "Pebble Flight",
   "private": true,
   "keywords": ["pebble-app"],
@@ -36,7 +36,20 @@
       "ERROR_MESSAGE": 14,
       "IS_LOADING": 15,
       "REQUEST_NEXT_FLIGHT": 16,
-      "NEXT_REFRESH_AT": 17
+      "NEXT_REFRESH_AT": 17,
+      "AIRCRAFT_MODEL": 18,
+      "AIRCRAFT_NUMBER": 19,
+      "AIRCRAFT_FIRST_FLIGHT": 20,
+      "AIRCRAFT_LEG_1": 21,
+      "AIRCRAFT_LEG_1_STATUS": 22,
+      "AIRCRAFT_LEG_1_LEVEL": 23,
+      "AIRCRAFT_LEG_2": 24,
+      "AIRCRAFT_LEG_2_STATUS": 25,
+      "AIRCRAFT_LEG_2_LEVEL": 26,
+      "BOOKING_CODE": 27,
+      "SEAT_NUMBER": 28,
+      "SEAT_POSITION": 29,
+      "REQUEST_AIRCRAFT_DETAILS": 30
     },
     "resources": {
       "media": [

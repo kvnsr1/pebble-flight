@@ -6,7 +6,7 @@ A Pebble Time 2 flight-status app inspired by the glanceable parts of Flighty. I
 
 - The native C watch app targets `emery` (Pebble Time 2).
 - PebbleKit JS runs in the Pebble phone app, calls FlightAware AeroAPI, caches the last successful response, and sends a compact message to the watch.
-- The settings page stores up to three flights and one AeroAPI key.
+- The settings page stores up to three flights, optional booking/seat details, and one AeroAPI key.
 
 The watch itself does not have internet access, so the connected phone is required for fresh data. Gate and terminal values are shown as `--` when an airline/airport has not published them.
 
@@ -63,18 +63,22 @@ For a fresh installation on another Mac, use the steps below.
 2. Publish the `config/` folder as a static HTTPS site (GitHub Pages works).
 3. Replace `CONFIG_URL` near the top of `src/pkjs/index.js` with that HTTPS URL.
 4. Rebuild and install the app.
-5. Open Pebble Flight's settings in the phone app, then enter up to three IATA/ICAO flight identifiers such as `AA100`, their departure dates, and the key.
+5. Open Pebble Flight's settings in the phone app, then enter up to three IATA/ICAO flight identifiers such as `AA100`, their departure dates, and the key. Booking code, seat number, and window/middle/aisle position are optional per flight.
 
 For personal testing, the key is stored in the Pebble phone app's local storage and sent in AeroAPI's `x-apikey` header. It is never passed to the hosted settings page. Do not ship a public build this way: FlightAware does not support browser-side CORS requests and recommends a backend application server. Put AeroAPI behind a small serverless proxy so users cannot extract or abuse your key. FlightAware's current Personal terms are for personal/academic derivative use; a public consumer app requires the appropriate commercial tier.
 
 ## Controls
 
-- **Up / Down:** move between Summary, Departure, and Arrival.
+- **Up / Down:** move between Summary, Departure, Arrival, Aircraft, and Booking.
 - **Select:** refresh the visible flight.
 - **Long-press Select:** switch to the next saved flight.
 - **Back:** exit.
 
 While the app is open, a lightweight five-minute heartbeat checks whether the visible flight is due for an AeroAPI update. Flights more than seven days away do not auto-refresh. From one to seven days, only the next flight refreshes every six hours; flights refresh hourly in the final 24 hours, every 15 minutes in the final six hours, and every 10 minutes while airborne. Canceled and completed flights stop refreshing, and landed flights leave the list after one hour. Select still forces a manual refresh for non-terminal flights.
+
+Opening the Aircraft page requests and caches up to two prior legs for the assigned registration. This is lazy-loaded and costs at most one additional `/flights/{registration}` result set per tracked flight (currently $0.005). AeroAPI Personal does not expose an individual airframe's original first-flight date, so that field remains unavailable rather than displaying an inferred date.
+
+Booking and seat details remain in the Pebble phone app's local storage. They are passed to the HTTPS configuration page in the URL fragment, which is not sent to the GitHub Pages host.
 
 ## Delay rules
 

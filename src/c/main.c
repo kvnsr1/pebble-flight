@@ -14,8 +14,20 @@ typedef struct {
   char arrival_terminal[12];
   char updated[16];
   char next_refresh[24];
+  char aircraft_model[28];
+  char aircraft_number[16];
+  char aircraft_first_flight[20];
+  char aircraft_leg_1[24];
+  char aircraft_leg_1_status[24];
+  char aircraft_leg_2[24];
+  char aircraft_leg_2_status[24];
+  char booking_code[16];
+  char seat_number[8];
+  char seat_position[12];
   char error[84];
   int status_level;
+  int aircraft_leg_1_level;
+  int aircraft_leg_2_level;
   bool loading;
 } FlightData;
 
@@ -29,8 +41,8 @@ static int s_loading_frame;
 
 #define REFRESH_INTERVAL_MS (5 * 60 * 1000)
 
-static GColor status_color(void) {
-  switch (s_flight.status_level) {
+static GColor status_color_for_level(int level) {
+  switch (level) {
     case 0: return GColorIslamicGreen;
     case 1: return GColorChromeYellow;
     case 2: return GColorOrange;
@@ -38,6 +50,8 @@ static GColor status_color(void) {
     default: return GColorDarkCandyAppleRed;
   }
 }
+
+static GColor status_color(void) { return status_color_for_level(s_flight.status_level); }
 
 static void copy_tuple(DictionaryIterator *iter, uint32_t key, char *dest, size_t size) {
   Tuple *tuple = dict_find(iter, key);
@@ -54,9 +68,9 @@ static void draw_text(GContext *ctx, const char *text, GRect rect, GFont font,
 }
 
 static void draw_page_dots(GContext *ctx, GRect bounds) {
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 5; i++) {
     graphics_context_set_fill_color(ctx, i == s_page ? GColorBlue : GColorLightGray);
-    graphics_fill_circle(ctx, GPoint(bounds.size.w - 4, 105 + i * 12), i == s_page ? 3 : 2);
+    graphics_fill_circle(ctx, GPoint(bounds.size.w - 4, 91 + i * 11), i == s_page ? 3 : 2);
   }
 }
 
@@ -131,6 +145,136 @@ static void draw_refresh_footer(GContext *ctx, GRect bounds) {
             GTextAlignmentCenter);
 }
 
+static void draw_aircraft_image(GContext *ctx, GPoint center, GColor color) {
+  graphics_context_set_fill_color(ctx, color);
+  graphics_fill_rect(ctx, GRect(center.x - 2, center.y - 15, 5, 30), 0, GCornerNone);
+  graphics_fill_circle(ctx, GPoint(center.x, center.y - 14), 3);
+  graphics_fill_rect(ctx, GRect(center.x - 18, center.y - 2, 37, 5), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(center.x - 12, center.y - 6, 25, 5), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(center.x - 8, center.y + 10, 17, 4), 0, GCornerNone);
+}
+
+static void draw_timeline_row(GContext *ctx, int y, const char *route,
+                              const char *status, int level, bool current) {
+  graphics_context_set_fill_color(ctx, status_color_for_level(level));
+  graphics_fill_circle(ctx, GPoint(17, y + 8), current ? 5 : 4);
+  draw_text(ctx, route, GRect(29, y, 83, 18),
+            fonts_get_system_font(current ? FONT_KEY_GOTHIC_14_BOLD : FONT_KEY_GOTHIC_14),
+            GColorBlack, GTextAlignmentLeft);
+  draw_text(ctx, status, GRect(111, y, 77, 18),
+            fonts_get_system_font(FONT_KEY_GOTHIC_14),
+            status_color_for_level(level), GTextAlignmentRight);
+}
+
+static void draw_aircraft_page(GContext *ctx, GRect bounds) {
+  graphics_context_set_fill_color(ctx, GColorCobaltBlue);
+  graphics_fill_rect(ctx, GRect(0, 0, bounds.size.w, 70), 0, GCornerNone);
+  draw_text(ctx, "AIRCRAFT", GRect(8, 5, 92, 22),
+            fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), GColorWhite,
+            GTextAlignmentLeft);
+  draw_aircraft_image(ctx, GPoint(151, 35), GColorWhite);
+
+  draw_text(ctx, "MODEL", GRect(7, 75, 55, 18),
+            fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), GColorDarkGray,
+            GTextAlignmentLeft);
+  draw_text(ctx, s_flight.aircraft_model, GRect(62, 73, 126, 22),
+            fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), GColorBlack,
+            GTextAlignmentRight);
+  draw_separator(ctx, 96, bounds.size.w);
+  draw_text(ctx, "NUMBER", GRect(7, 99, 62, 18),
+            fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), GColorDarkGray,
+            GTextAlignmentLeft);
+  draw_text(ctx, s_flight.aircraft_number, GRect(69, 97, 119, 22),
+            fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), GColorBlue,
+            GTextAlignmentRight);
+  draw_separator(ctx, 121, bounds.size.w);
+  draw_text(ctx, "FIRST FLIGHT", GRect(7, 124, 90, 18),
+            fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), GColorDarkGray,
+            GTextAlignmentLeft);
+  draw_text(ctx, s_flight.aircraft_first_flight, GRect(97, 122, 91, 22),
+            fonts_get_system_font(FONT_KEY_GOTHIC_14), GColorBlack,
+            GTextAlignmentRight);
+
+  draw_text(ctx, "INCOMING LEGS", GRect(7, 146, 130, 18),
+            fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), GColorBlack,
+            GTextAlignmentLeft);
+  graphics_context_set_stroke_color(ctx, GColorLightGray);
+  graphics_context_set_stroke_width(ctx, 2);
+  graphics_draw_line(ctx, GPoint(17, 165), GPoint(17, 219));
+  draw_timeline_row(ctx, 162, s_flight.aircraft_leg_2,
+                    s_flight.aircraft_leg_2_status, s_flight.aircraft_leg_2_level, false);
+  draw_timeline_row(ctx, 184, s_flight.aircraft_leg_1,
+                    s_flight.aircraft_leg_1_status, s_flight.aircraft_leg_1_level, false);
+  char current_route[24];
+  snprintf(current_route, sizeof(current_route), "%s > %s", s_flight.origin, s_flight.destination);
+  draw_timeline_row(ctx, 206, current_route, s_flight.status, s_flight.status_level, true);
+  draw_page_dots(ctx, bounds);
+}
+
+static void draw_ticket_icon(GContext *ctx, GRect rect) {
+  graphics_context_set_stroke_color(ctx, GColorBlue);
+  graphics_context_set_stroke_width(ctx, 2);
+  graphics_draw_round_rect(ctx, rect, 4);
+  for (int x = rect.origin.x + 7; x < rect.origin.x + rect.size.w - 5; x += 4) {
+    graphics_draw_line(ctx, GPoint(x, rect.origin.y + 8),
+                       GPoint(x, rect.origin.y + rect.size.h - 8));
+  }
+}
+
+static void draw_seat_map(GContext *ctx, GRect bounds) {
+  graphics_context_set_stroke_color(ctx, GColorLightGray);
+  graphics_context_set_stroke_width(ctx, 2);
+  graphics_draw_round_rect(ctx, GRect(16, 126, 94, 63), 24);
+  const char *labels[] = {"WINDOW", "MIDDLE", "AISLE"};
+  const int xs[] = {27, 55, 83};
+  for (int i = 0; i < 3; i++) {
+    bool selected = strcmp(s_flight.seat_position, labels[i]) == 0;
+    graphics_context_set_fill_color(ctx, selected ? GColorBlue : GColorLightGray);
+    graphics_fill_rect(ctx, GRect(xs[i] - 8, 145, 17, 22), 4, GCornersAll);
+    draw_text(ctx, i == 0 ? "W" : (i == 1 ? "M" : "A"),
+              GRect(xs[i] - 8, 147, 17, 18), fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
+              selected ? GColorWhite : GColorBlack, GTextAlignmentCenter);
+  }
+}
+
+static void draw_booking_page(GContext *ctx, GRect bounds) {
+  graphics_context_set_fill_color(ctx, GColorCobaltBlue);
+  graphics_fill_rect(ctx, GRect(0, 0, bounds.size.w, 54), 0, GCornerNone);
+  draw_text(ctx, "BOOKING", GRect(8, 7, bounds.size.w - 16, 24),
+            fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), GColorWhite,
+            GTextAlignmentCenter);
+  draw_text(ctx, s_flight.flight, GRect(8, 28, bounds.size.w - 16, 20),
+            fonts_get_system_font(FONT_KEY_GOTHIC_14), GColorWhite,
+            GTextAlignmentCenter);
+
+  draw_ticket_icon(ctx, GRect(12, 65, 43, 43));
+  draw_text(ctx, "BOOKING CODE", GRect(66, 63, 122, 18),
+            fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), GColorDarkGray,
+            GTextAlignmentLeft);
+  draw_text(ctx, s_flight.booking_code, GRect(66, 79, 122, 30),
+            fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GColorBlue,
+            GTextAlignmentLeft);
+  draw_separator(ctx, 116, bounds.size.w);
+
+  draw_seat_map(ctx, bounds);
+  draw_text(ctx, "SEAT", GRect(122, 127, 66, 18),
+            fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), GColorDarkGray,
+            GTextAlignmentLeft);
+  draw_text(ctx, s_flight.seat_number, GRect(120, 143, 68, 34),
+            fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK), GColorBlue,
+            GTextAlignmentLeft);
+  draw_text(ctx, s_flight.seat_position, GRect(113, 177, 75, 20),
+            fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD), GColorBlack,
+            GTextAlignmentLeft);
+  draw_text(ctx, "W  M  A", GRect(16, 190, 94, 18),
+            fonts_get_system_font(FONT_KEY_GOTHIC_14), GColorDarkGray,
+            GTextAlignmentCenter);
+  draw_text(ctx, "Private • stored on phone", GRect(8, 208, bounds.size.w - 16, 18),
+            fonts_get_system_font(FONT_KEY_GOTHIC_14), GColorDarkGray,
+            GTextAlignmentCenter);
+  draw_page_dots(ctx, bounds);
+}
+
 static void canvas_update(Layer *layer, GContext *ctx) {
   GRect b = layer_get_bounds(layer);
   graphics_context_set_fill_color(ctx, GColorWhite);
@@ -174,7 +318,7 @@ static void canvas_update(Layer *layer, GContext *ctx) {
               GTextAlignmentRight);
     draw_refresh_footer(ctx, b);
     draw_page_dots(ctx, b);
-  } else {
+  } else if (s_page <= 2) {
     bool departure = s_page == 1;
     const char *airport = departure ? s_flight.origin : s_flight.destination;
     const char *time = departure ? s_flight.departure_time : s_flight.arrival_time;
@@ -215,6 +359,10 @@ static void canvas_update(Layer *layer, GContext *ctx) {
               GTextAlignmentRight);
     draw_refresh_footer(ctx, b);
     draw_page_dots(ctx, b);
+  } else if (s_page == 3) {
+    draw_aircraft_page(ctx, b);
+  } else {
+    draw_booking_page(ctx, b);
   }
 }
 
@@ -235,9 +383,18 @@ static void start_loading_animation(void) {
   }
 }
 
+static void request_aircraft_details(void) {
+  DictionaryIterator *out;
+  if (app_message_outbox_begin(&out) == APP_MSG_OK) {
+    dict_write_uint8(out, MESSAGE_KEY_REQUEST_AIRCRAFT_DETAILS, 1);
+    app_message_outbox_send();
+  }
+}
+
 static void change_page(int delta) {
-  s_page = (s_page + delta + 3) % 3;
+  s_page = (s_page + delta + 5) % 5;
   layer_mark_dirty(s_canvas);
+  if (s_page == 3) { request_aircraft_details(); }
 }
 
 static void up_click(ClickRecognizerRef recognizer, void *context) { change_page(-1); }
@@ -300,10 +457,24 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
   copy_tuple(iter, MESSAGE_KEY_ARRIVAL_TERMINAL, s_flight.arrival_terminal, sizeof(s_flight.arrival_terminal));
   copy_tuple(iter, MESSAGE_KEY_UPDATED_AT, s_flight.updated, sizeof(s_flight.updated));
   copy_tuple(iter, MESSAGE_KEY_NEXT_REFRESH_AT, s_flight.next_refresh, sizeof(s_flight.next_refresh));
+  copy_tuple(iter, MESSAGE_KEY_AIRCRAFT_MODEL, s_flight.aircraft_model, sizeof(s_flight.aircraft_model));
+  copy_tuple(iter, MESSAGE_KEY_AIRCRAFT_NUMBER, s_flight.aircraft_number, sizeof(s_flight.aircraft_number));
+  copy_tuple(iter, MESSAGE_KEY_AIRCRAFT_FIRST_FLIGHT, s_flight.aircraft_first_flight, sizeof(s_flight.aircraft_first_flight));
+  copy_tuple(iter, MESSAGE_KEY_AIRCRAFT_LEG_1, s_flight.aircraft_leg_1, sizeof(s_flight.aircraft_leg_1));
+  copy_tuple(iter, MESSAGE_KEY_AIRCRAFT_LEG_1_STATUS, s_flight.aircraft_leg_1_status, sizeof(s_flight.aircraft_leg_1_status));
+  copy_tuple(iter, MESSAGE_KEY_AIRCRAFT_LEG_2, s_flight.aircraft_leg_2, sizeof(s_flight.aircraft_leg_2));
+  copy_tuple(iter, MESSAGE_KEY_AIRCRAFT_LEG_2_STATUS, s_flight.aircraft_leg_2_status, sizeof(s_flight.aircraft_leg_2_status));
+  copy_tuple(iter, MESSAGE_KEY_BOOKING_CODE, s_flight.booking_code, sizeof(s_flight.booking_code));
+  copy_tuple(iter, MESSAGE_KEY_SEAT_NUMBER, s_flight.seat_number, sizeof(s_flight.seat_number));
+  copy_tuple(iter, MESSAGE_KEY_SEAT_POSITION, s_flight.seat_position, sizeof(s_flight.seat_position));
   copy_tuple(iter, MESSAGE_KEY_ERROR_MESSAGE, s_flight.error, sizeof(s_flight.error));
   Tuple *level = dict_find(iter, MESSAGE_KEY_STATUS_LEVEL);
+  Tuple *leg_1_level = dict_find(iter, MESSAGE_KEY_AIRCRAFT_LEG_1_LEVEL);
+  Tuple *leg_2_level = dict_find(iter, MESSAGE_KEY_AIRCRAFT_LEG_2_LEVEL);
   Tuple *loading = dict_find(iter, MESSAGE_KEY_IS_LOADING);
   if (level) { s_flight.status_level = (int)level->value->int32; }
+  if (leg_1_level) { s_flight.aircraft_leg_1_level = (int)leg_1_level->value->int32; }
+  if (leg_2_level) { s_flight.aircraft_leg_2_level = (int)leg_2_level->value->int32; }
   if (loading) { s_flight.loading = loading->value->int32 != 0; }
   if (s_flight.loading) { start_loading_animation(); }
   layer_mark_dirty(s_canvas);
@@ -332,6 +503,16 @@ static void init(void) {
   snprintf(s_flight.arrival_terminal, sizeof(s_flight.arrival_terminal), "--");
   snprintf(s_flight.updated, sizeof(s_flight.updated), "--");
   snprintf(s_flight.next_refresh, sizeof(s_flight.next_refresh), "--");
+  snprintf(s_flight.aircraft_model, sizeof(s_flight.aircraft_model), "--");
+  snprintf(s_flight.aircraft_number, sizeof(s_flight.aircraft_number), "--");
+  snprintf(s_flight.aircraft_first_flight, sizeof(s_flight.aircraft_first_flight), "Unavailable");
+  snprintf(s_flight.aircraft_leg_1, sizeof(s_flight.aircraft_leg_1), "--");
+  snprintf(s_flight.aircraft_leg_1_status, sizeof(s_flight.aircraft_leg_1_status), "--");
+  snprintf(s_flight.aircraft_leg_2, sizeof(s_flight.aircraft_leg_2), "--");
+  snprintf(s_flight.aircraft_leg_2_status, sizeof(s_flight.aircraft_leg_2_status), "--");
+  snprintf(s_flight.booking_code, sizeof(s_flight.booking_code), "--");
+  snprintf(s_flight.seat_number, sizeof(s_flight.seat_number), "--");
+  snprintf(s_flight.seat_position, sizeof(s_flight.seat_position), "--");
   s_window = window_create();
   window_set_window_handlers(s_window, (WindowHandlers){.load = window_load, .unload = window_unload});
   window_set_click_config_provider(s_window, click_config);

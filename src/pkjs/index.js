@@ -7,6 +7,7 @@ var FLIGHTS_KEY = 'pebbleFlight.flights';
 var ACTIVE_KEY = 'pebbleFlight.activeIndex';
 var CACHE_KEY = 'pebbleFlight.flightCache';
 var STATE_KEY = 'pebbleFlight.refreshState';
+var DETAILS_KEY = 'pebbleFlight.aircraftDetails';
 var LEGACY_CACHE_KEY = 'pebbleFlight.lastFlight';
 
 function localToday() {
@@ -20,7 +21,11 @@ function cleanFlights(flights) {
   return flights.slice(0, 3).map(function(flight) {
     return {
       flightNumber: String(flight.flightNumber || '').trim().toUpperCase(),
-      flightDate: String(flight.flightDate || '').trim()
+      flightDate: String(flight.flightDate || '').trim(),
+      bookingCode: String(flight.bookingCode || '').trim().toUpperCase().slice(0, 12),
+      seatNumber: String(flight.seatNumber || '').trim().toUpperCase().slice(0, 6),
+      seatPosition: /^(window|middle|aisle)$/.test(flight.seatPosition) ?
+        flight.seatPosition : ''
     };
   }).filter(function(flight) {
     return flight.flightNumber && flight.flightDate;
@@ -53,6 +58,7 @@ function pruneLandedFlights(flights) {
   var now = Date.now();
   var states = readJson(STATE_KEY);
   var cache = readJson(CACHE_KEY);
+  var details = readJson(DETAILS_KEY);
   var kept = flights.filter(function(flight) {
     var state = states[flightKey(flight)];
     return !state || !state.actualOn || now < state.actualOn + 60 * 60 * 1000;
@@ -63,8 +69,10 @@ function pruneLandedFlights(flights) {
   kept.forEach(function(flight) { retained[flightKey(flight)] = true; });
   Object.keys(states).forEach(function(key) { if (!retained[key]) { delete states[key]; } });
   Object.keys(cache).forEach(function(key) { if (!retained[key]) { delete cache[key]; } });
+  Object.keys(details).forEach(function(key) { if (!retained[key]) { delete details[key]; } });
   writeJson(STATE_KEY, states);
   writeJson(CACHE_KEY, cache);
+  writeJson(DETAILS_KEY, details);
   localStorage.setItem(FLIGHTS_KEY, JSON.stringify(kept));
   var index = parseInt(localStorage.getItem(ACTIVE_KEY), 10) || 0;
   localStorage.setItem(ACTIVE_KEY, String(Math.min(index, Math.max(0, kept.length - 1))));
@@ -160,6 +168,29 @@ function addRefreshLabel(message, config, flight) {
   return message;
 }
 
+function decorateMessage(message, config, flight) {
+  addRefreshLabel(message, config, flight);
+  message.BOOKING_CODE = flight.bookingCode || '--';
+  message.SEAT_NUMBER = flight.seatNumber || '--';
+  message.SEAT_POSITION = (flight.seatPosition || '--').toUpperCase();
+  var details = readJson(DETAILS_KEY)[flightKey(flight)];
+  if (details) {
+    Object.keys(details).forEach(function(key) {
+      if (key !== 'loaded') { message[key] = details[key]; }
+    });
+  }
+  message.AIRCRAFT_MODEL = message.AIRCRAFT_MODEL || '--';
+  message.AIRCRAFT_NUMBER = message.AIRCRAFT_NUMBER || '--';
+  message.AIRCRAFT_FIRST_FLIGHT = message.AIRCRAFT_FIRST_FLIGHT || 'Unavailable';
+  message.AIRCRAFT_LEG_1 = message.AIRCRAFT_LEG_1 || '--';
+  message.AIRCRAFT_LEG_1_STATUS = message.AIRCRAFT_LEG_1_STATUS || '--';
+  message.AIRCRAFT_LEG_1_LEVEL = message.AIRCRAFT_LEG_1_LEVEL || 0;
+  message.AIRCRAFT_LEG_2 = message.AIRCRAFT_LEG_2 || '--';
+  message.AIRCRAFT_LEG_2_STATUS = message.AIRCRAFT_LEG_2_STATUS || '--';
+  message.AIRCRAFT_LEG_2_LEVEL = message.AIRCRAFT_LEG_2_LEVEL || 0;
+  return message;
+}
+
 function send(payload) {
   Pebble.sendAppMessage(payload, function() {}, function(error) {
     console.log('AppMessage failed: ' + JSON.stringify(error));
@@ -171,7 +202,7 @@ function sendError(message) {
 }
 
 function sendPlaceholder(config, flight) {
-  send(addRefreshLabel({
+  send(decorateMessage({
     FLIGHT_NUMBER: flight.flightNumber,
     FLIGHT_DATE: flight.flightDate,
     ORIGIN: '---',
@@ -184,6 +215,9 @@ function sendPlaceholder(config, flight) {
     DEPARTURE_TERMINAL: '--',
     ARRIVAL_GATE: '--',
     ARRIVAL_TERMINAL: '--',
+    AIRCRAFT_MODEL: '--',
+    AIRCRAFT_NUMBER: '--',
+    AIRCRAFT_FIRST_FLIGHT: 'Unavailable',
     UPDATED_AT: '--',
     ERROR_MESSAGE: '',
     IS_LOADING: 0
@@ -197,7 +231,7 @@ function showCurrent(config) {
     return;
   }
   var cached = cachedMessage(flight);
-  if (cached) { send(addRefreshLabel(cached, config, flight)); }
+  if (cached) { send(decorateMessage(cached, config, flight)); }
   else { sendPlaceholder(config, flight); }
 }
 
@@ -276,7 +310,7 @@ function refresh(force) {
       writeJson(STATE_KEY, latestStates);
       message.IS_LOADING = 0;
       message.ERROR_MESSAGE = '';
-      addRefreshLabel(message, config, selected);
+      decorateMessage(message, config, selected);
       cacheMessage(selected, message);
       var latest = currentFlight(settings());
       if (latest && flightKey(latest) === selectedKey) { send(message); }
@@ -286,6 +320,81 @@ function refresh(force) {
   };
   request.onerror = function() { sendIfStillSelected('Could not reach FlightAware; showing saved data'); };
   request.ontimeout = function() { sendIfStillSelected('Flight lookup timed out'); };
+  request.send();
+}
+
+function legDetails(flight) {
+  var status = flightTools.statusFor(flight);
+  var origin = flight.origin && (flight.origin.code_iata || flight.origin.code) || '---';
+  var destination = flight.destination &&
+    (flight.destination.code_iata || flight.destination.code) || '---';
+  return {
+    route: origin + ' > ' + destination,
+    status: status.label,
+    level: status.level
+  };
+}
+
+function loadAircraftDetails() {
+  var config = settings();
+  var selected = currentFlight(config);
+  if (!selected) { return; }
+  var key = flightKey(selected);
+  var detailsCache = readJson(DETAILS_KEY);
+  if (detailsCache[key] && (detailsCache[key].loaded ||
+      Date.now() - detailsCache[key].requestedAt < 24 * 60 * 60 * 1000)) {
+    showCurrent(config);
+    return;
+  }
+  var state = readJson(STATE_KEY)[key];
+  if (!state || !state.registration || state.registration === '--') {
+    showCurrent(config);
+    return;
+  }
+
+  detailsCache[key] = {loaded: false, requestedAt: Date.now()};
+  writeJson(DETAILS_KEY, detailsCache);
+
+  var endMs = state.scheduledOut || Date.now();
+  var startMs = endMs - 4 * 24 * 60 * 60 * 1000;
+  var url = API_ROOT + '/flights/' + encodeURIComponent(state.registration) +
+    '?start=' + encodeURIComponent(new Date(startMs).toISOString()) +
+    '&end=' + encodeURIComponent(new Date(endMs).toISOString()) + '&max_pages=1';
+  var request = new XMLHttpRequest();
+  request.open('GET', url, true);
+  request.setRequestHeader('Accept', 'application/json');
+  request.setRequestHeader('x-apikey', config.apiKey);
+  request.timeout = 15000;
+  request.onload = function() {
+    if (request.status < 200 || request.status >= 300) { return; }
+    try {
+      var flights = (JSON.parse(request.responseText).flights || []).filter(function(candidate) {
+        var departure = Date.parse(candidate.scheduled_out || candidate.scheduled_off);
+        return candidate.fa_flight_id !== state.faFlightId && departure < endMs;
+      }).sort(function(a, b) {
+        return Date.parse(b.scheduled_out || b.scheduled_off) -
+          Date.parse(a.scheduled_out || a.scheduled_off);
+      }).slice(0, 2);
+      var first = flights[0] ? legDetails(flights[0]) : null;
+      var second = flights[1] ? legDetails(flights[1]) : null;
+      detailsCache[key] = {
+        loaded: true,
+        requestedAt: Date.now(),
+        AIRCRAFT_MODEL: flightTools.aircraftModel(state.aircraftType),
+        AIRCRAFT_NUMBER: state.registration,
+        AIRCRAFT_FIRST_FLIGHT: 'Unavailable',
+        AIRCRAFT_LEG_1: first ? first.route : '--',
+        AIRCRAFT_LEG_1_STATUS: first ? first.status : '--',
+        AIRCRAFT_LEG_1_LEVEL: first ? first.level : 0,
+        AIRCRAFT_LEG_2: second ? second.route : '--',
+        AIRCRAFT_LEG_2_STATUS: second ? second.status : '--',
+        AIRCRAFT_LEG_2_LEVEL: second ? second.level : 0
+      };
+      writeJson(DETAILS_KEY, detailsCache);
+      var active = currentFlight(settings());
+      if (active && flightKey(active) === key) { showCurrent(settings()); }
+    } catch (ignore) {}
+  };
   request.send();
 }
 
@@ -309,19 +418,14 @@ Pebble.addEventListener('ready', function() {
 
 Pebble.addEventListener('appmessage', function(event) {
   if (event.payload.REQUEST_NEXT_FLIGHT) { nextFlight(); }
+  else if (event.payload.REQUEST_AIRCRAFT_DETAILS) { loadAircraftDetails(); }
   else if (event.payload.REQUEST_REFRESH) { refresh(event.payload.REQUEST_REFRESH === 1); }
 });
 
 Pebble.addEventListener('showConfiguration', function() {
   var config = settings();
-  var query = [];
-  for (var i = 0; i < 3; i += 1) {
-    var flight = config.flights[i] || {};
-    query.push('f' + (i + 1) + '=' + encodeURIComponent(flight.flightNumber || ''));
-    query.push('d' + (i + 1) + '=' + encodeURIComponent(flight.flightDate || ''));
-  }
-  query.push('hasApiKey=' + (config.apiKey ? '1' : '0'));
-  Pebble.openURL(CONFIG_URL + '?' + query.join('&'));
+  var state = {flights: config.flights, hasApiKey: Boolean(config.apiKey)};
+  Pebble.openURL(CONFIG_URL + '#state=' + encodeURIComponent(JSON.stringify(state)));
 });
 
 Pebble.addEventListener('webviewclosed', function(event) {

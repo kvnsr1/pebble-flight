@@ -85,8 +85,26 @@ function toRefreshState(flight, requestedAt) {
     scheduledIn: epochMs(flight.scheduled_in || flight.scheduled_on),
     estimatedIn: epochMs(flight.estimated_in || flight.estimated_on),
     actualOn: epochMs(flight.actual_on || flight.actual_in),
-    cancelled: Boolean(flight.cancelled)
+    cancelled: Boolean(flight.cancelled),
+    registration: valueOrDash(flight.registration),
+    aircraftType: valueOrDash(flight.aircraft_type),
+    faFlightId: valueOrDash(flight.fa_flight_id)
   };
+}
+
+function aircraftModel(type) {
+  var models = {
+    A19N: 'Airbus A319neo', A20N: 'Airbus A320neo', A21N: 'Airbus A321neo',
+    A319: 'Airbus A319', A320: 'Airbus A320', A321: 'Airbus A321',
+    A332: 'Airbus A330-200', A333: 'Airbus A330-300', A359: 'Airbus A350-900',
+    B37M: 'Boeing 737 MAX 7', B38M: 'Boeing 737 MAX 8', B39M: 'Boeing 737 MAX 9',
+    B737: 'Boeing 737-700', B738: 'Boeing 737-800', B739: 'Boeing 737-900',
+    B752: 'Boeing 757-200', B763: 'Boeing 767-300', B772: 'Boeing 777-200',
+    B77W: 'Boeing 777-300ER', B788: 'Boeing 787-8', B789: 'Boeing 787-9',
+    CRJ2: 'CRJ-200', CRJ7: 'CRJ-700', CRJ9: 'CRJ-900',
+    E170: 'Embraer E170', E175: 'Embraer E175', E190: 'Embraer E190'
+  };
+  return models[type] || valueOrDash(type);
 }
 
 function departureMs(state, fallback) {
@@ -179,11 +197,15 @@ function toMessage(flight) {
     DEPARTURE_TERMINAL: valueOrDash(flight.terminal_origin),
     ARRIVAL_GATE: valueOrDash(flight.gate_destination),
     ARRIVAL_TERMINAL: valueOrDash(flight.terminal_destination),
+    AIRCRAFT_MODEL: aircraftModel(flight.aircraft_type),
+    AIRCRAFT_NUMBER: valueOrDash(flight.registration),
+    AIRCRAFT_FIRST_FLIGHT: '--',
     UPDATED_AT: deviceLocalTime(new Date().toISOString())
   };
 }
 
 module.exports = {
+  aircraftModel: aircraftModel,
   chooseFlight: chooseFlight,
   departureMs: departureMs,
   delayMinutes: delayMinutes,

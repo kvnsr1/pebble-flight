@@ -30,6 +30,7 @@ assert.strictEqual(flight.chooseFlight([eveningPacificFlight], '2026-09-17').ide
 assert.strictEqual(flight.toMessage(eveningPacificFlight).FLIGHT_DATE, '2026-09-17');
 assert.strictEqual(flight.toMessage(eveningPacificFlight).DEPARTURE_TIME, '8:30 PM');
 assert.ok(/^\d{1,2}:\d{2} (AM|PM)$/.test(flight.deviceLocalTime('2026-09-17T20:30:00Z')));
+assert.strictEqual(flight.aircraftModel('B38M'), 'Boeing 737 MAX 8');
 
 var hour = 60 * 60 * 1000;
 var day = 24 * hour;
