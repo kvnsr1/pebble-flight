@@ -1,6 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 25 25">
-  <rect width="25" height="25" rx="6" fill="#071b2b"/>
-  <path d="M3 18.5c4-1.7 7.2-4.5 9.5-8.3" fill="none" stroke="#42d7ff" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="1.4 2.2"/>
-  <circle cx="4" cy="19" r="2" fill="#ffd45c"/>
-  <path d="M8 12.8 21 5.2l-5.1 13.5-2.5-5-5.4-.9Zm5.7-.9 1.8 3.6 2.5-6.6-6.4 3.7 2.1-.7Z" fill="#f7fbff"/>
+  <rect width="25" height="25" rx="5" fill="#f7fbff"/>
+
+  <!-- Pixel-art passenger jet climbing away from the runway. -->
+  <g fill="#f7fbff" stroke="#071b2b" stroke-width="1.35" stroke-linejoin="miter" shape-rendering="crispEdges">
+    <path d="M3 14h4l3-2 3-2 3-2 4-2h2l1 1v2l-3 2-3 2-4 2-4 1H5l-2-1Z"/>
+    <path d="m7 13-3-4h2l5 3-2 2Z"/>
+    <path d="m13 11-2-5h2l4 3-2 3Z"/>
+    <path d="m14 14-1 5h-2l-1-4Z"/>
+  </g>
+  <g fill="#42d7ff" shape-rendering="crispEdges">
+    <rect x="16" y="9" width="1" height="1"/>
+    <rect x="18" y="8" width="1" height="1"/>
+    <rect x="20" y="7" width="1" height="1"/>
+    <rect x="3" y="17" width="4" height="1"/>
+    <rect x="5" y="19" width="4" height="1"/>
+  </g>
+
+  <!-- Small control tower and runway echo the reference image. -->
+  <g fill="#071b2b" shape-rendering="crispEdges">
+    <rect x="19" y="15" width="2" height="6"/>
+    <rect x="17" y="14" width="6" height="3"/>
+    <rect x="18" y="13" width="4" height="1"/>
+    <rect x="20" y="11" width="1" height="2"/>
+    <rect x="2" y="21" width="21" height="2"/>
+  </g>
+  <g fill="#f7fbff" shape-rendering="crispEdges">
+    <rect x="18" y="15" width="1" height="1"/>
+    <rect x="20" y="15" width="1" height="1"/>
+    <rect x="22" y="15" width="1" height="1"/>
+    <rect x="4" y="21" width="4" height="1"/>
+    <rect x="11" y="21" width="4" height="1"/>
+  </g>
+  <rect x="18" y="22" width="4" height="1" fill="#ffd45c" shape-rendering="crispEdges"/>
 </svg>
