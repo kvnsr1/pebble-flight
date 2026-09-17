@@ -136,6 +136,30 @@ function immediateFlightKey(config, states) {
   return candidates.length ? flightKey(candidates[0]) : '';
 }
 
+function nextRefreshLabel(config, flight, states, now) {
+  var key = flightKey(flight);
+  var state = states[key];
+  if (flightTools.isTerminal(state)) { return 'OFF'; }
+  var fallback = configuredDepartureMs(flight);
+  var isImmediate = key === immediateFlightKey(config, states);
+  var interval = flightTools.refreshIntervalMs(state, fallback, isImmediate, now);
+  if (interval === null) {
+    var departure = flightTools.departureMs(state, fallback);
+    if (departure - now > 7 * 24 * 60 * 60 * 1000) {
+      return flightTools.deviceLocalDateTime(departure - 7 * 24 * 60 * 60 * 1000);
+    }
+    return 'WHEN NEXT';
+  }
+  if (!state || !state.lastRequestAt) { return 'DUE NOW'; }
+  return flightTools.deviceLocalTime(new Date(state.lastRequestAt + interval).toISOString());
+}
+
+function addRefreshLabel(message, config, flight) {
+  message.NEXT_REFRESH_AT = nextRefreshLabel(
+    config, flight, readJson(STATE_KEY), Date.now());
+  return message;
+}
+
 function send(payload) {
   Pebble.sendAppMessage(payload, function() {}, function(error) {
     console.log('AppMessage failed: ' + JSON.stringify(error));
@@ -146,8 +170,8 @@ function sendError(message) {
   send({IS_LOADING: 0, ERROR_MESSAGE: message.slice(0, 80)});
 }
 
-function sendPlaceholder(flight) {
-  send({
+function sendPlaceholder(config, flight) {
+  send(addRefreshLabel({
     FLIGHT_NUMBER: flight.flightNumber,
     FLIGHT_DATE: flight.flightDate,
     ORIGIN: '---',
@@ -163,7 +187,7 @@ function sendPlaceholder(flight) {
     UPDATED_AT: '--',
     ERROR_MESSAGE: '',
     IS_LOADING: 0
-  });
+  }, config, flight));
 }
 
 function showCurrent(config) {
@@ -173,7 +197,8 @@ function showCurrent(config) {
     return;
   }
   var cached = cachedMessage(flight);
-  if (cached) { send(cached); } else { sendPlaceholder(flight); }
+  if (cached) { send(addRefreshLabel(cached, config, flight)); }
+  else { sendPlaceholder(config, flight); }
 }
 
 function apiError(status) {
@@ -251,6 +276,7 @@ function refresh(force) {
       writeJson(STATE_KEY, latestStates);
       message.IS_LOADING = 0;
       message.ERROR_MESSAGE = '';
+      addRefreshLabel(message, config, selected);
       cacheMessage(selected, message);
       var latest = currentFlight(settings());
       if (latest && flightKey(latest) === selectedKey) { send(message); }

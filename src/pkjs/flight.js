@@ -36,6 +36,38 @@ function localTime(iso, timezone) {
   return hour + ':' + minute + ' ' + suffix;
 }
 
+function deviceLocalTime(iso) {
+  if (!iso) { return '--'; }
+  if (typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      }).format(new Date(iso)).replace(/\s/g, ' ');
+    } catch (ignore) {}
+  }
+  return localTime(iso, 'America/Los_Angeles');
+}
+
+function deviceLocalDateTime(epoch) {
+  if (!epoch) { return '--'; }
+  if (typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      }).format(new Date(epoch)).replace(/,|\s/g, function(match) {
+        return match === ',' ? '' : ' ';
+      });
+    } catch (ignore) {}
+  }
+  return deviceLocalTime(new Date(epoch).toISOString());
+}
+
 function epochMs(iso) {
   return iso ? Date.parse(iso) : NaN;
 }
@@ -147,7 +179,7 @@ function toMessage(flight) {
     DEPARTURE_TERMINAL: valueOrDash(flight.terminal_origin),
     ARRIVAL_GATE: valueOrDash(flight.gate_destination),
     ARRIVAL_TERMINAL: valueOrDash(flight.terminal_destination),
-    UPDATED_AT: localTime(new Date().toISOString())
+    UPDATED_AT: deviceLocalTime(new Date().toISOString())
   };
 }
 
@@ -155,6 +187,8 @@ module.exports = {
   chooseFlight: chooseFlight,
   departureMs: departureMs,
   delayMinutes: delayMinutes,
+  deviceLocalDateTime: deviceLocalDateTime,
+  deviceLocalTime: deviceLocalTime,
   isTerminal: isTerminal,
   localTime: localTime,
   refreshIntervalMs: refreshIntervalMs,

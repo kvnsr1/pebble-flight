@@ -1,6 +1,6 @@
 {
   "name": "pebble-flight",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "author": "Pebble Flight",
   "private": true,
   "keywords": ["pebble-app"],
@@ -35,7 +35,8 @@
       "UPDATED_AT": 13,
       "ERROR_MESSAGE": 14,
       "IS_LOADING": 15,
-      "REQUEST_NEXT_FLIGHT": 16
+      "REQUEST_NEXT_FLIGHT": 16,
+      "NEXT_REFRESH_AT": 17
     },
     "resources": {
       "media": [
