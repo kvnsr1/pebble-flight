@@ -1,12 +1,34 @@
 'use strict';
 
-function localDate(iso) {
+function localDate(iso, timezone) {
   if (!iso) { return '--'; }
+  if (timezone && typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
+    try {
+      var formatted = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(new Date(iso));
+      var parts = formatted.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+      if (parts) { return parts[3] + '-' + parts[1] + '-' + parts[2]; }
+    } catch (ignore) {}
+  }
   return iso.slice(0, 10);
 }
 
-function localTime(iso) {
+function localTime(iso, timezone) {
   if (!iso || iso.length < 16) { return '--'; }
+  if (timezone && typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      }).format(new Date(iso)).replace(/\s/g, ' ');
+    } catch (ignore) {}
+  }
   var hour = parseInt(iso.slice(11, 13), 10);
   var minute = iso.slice(14, 16);
   var suffix = hour >= 12 ? 'PM' : 'AM';
@@ -91,7 +113,9 @@ function valueOrDash(value) {
 }
 
 function matchesDate(flight, date) {
-  return localDate(flight.scheduled_out) === date || localDate(flight.scheduled_off) === date;
+  var timezone = flight.origin && flight.origin.timezone;
+  return localDate(flight.scheduled_out, timezone) === date ||
+    localDate(flight.scheduled_off, timezone) === date;
 }
 
 function chooseFlight(flights, date) {
@@ -106,13 +130,17 @@ function chooseFlight(flights, date) {
 
 function toMessage(flight) {
   var status = statusFor(flight);
+  var originTimezone = flight.origin && flight.origin.timezone;
+  var destinationTimezone = flight.destination && flight.destination.timezone;
   return {
     FLIGHT_NUMBER: valueOrDash(flight.ident_iata || flight.ident),
-    FLIGHT_DATE: localDate(flight.scheduled_out),
+    FLIGHT_DATE: localDate(flight.scheduled_out, originTimezone),
     ORIGIN: airportCode(flight.origin),
     DESTINATION: airportCode(flight.destination),
-    DEPARTURE_TIME: localTime(flight.actual_out || flight.estimated_out || flight.scheduled_out),
-    ARRIVAL_TIME: localTime(flight.actual_in || flight.estimated_in || flight.scheduled_in),
+    DEPARTURE_TIME: localTime(
+      flight.actual_out || flight.estimated_out || flight.scheduled_out, originTimezone),
+    ARRIVAL_TIME: localTime(
+      flight.actual_in || flight.estimated_in || flight.scheduled_in, destinationTimezone),
     STATUS_LABEL: status.label,
     STATUS_LEVEL: status.level,
     DEPARTURE_GATE: valueOrDash(flight.gate_origin),

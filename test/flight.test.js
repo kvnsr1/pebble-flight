@@ -9,7 +9,8 @@ function sample(delayMinutes) {
     estimated_out: new Date(Date.parse('2026-09-10T10:00:00-07:00') + delayMinutes * 60000).toISOString(),
     scheduled_in: '2026-09-10T18:00:00-04:00',
     estimated_in: '2026-09-10T18:10:00-04:00',
-    origin: {code_iata: 'LAX'}, destination: {code_iata: 'JFK'},
+    origin: {code_iata: 'LAX', timezone: 'America/Los_Angeles'},
+    destination: {code_iata: 'JFK', timezone: 'America/New_York'},
     terminal_origin: '4', gate_origin: '41', terminal_destination: '8', gate_destination: '12'
   };
 }
@@ -21,6 +22,13 @@ assert.strictEqual(flight.statusFor(sample(60)).level, 2);
 assert.strictEqual(flight.statusFor(sample(61)).level, 3);
 assert.strictEqual(flight.toMessage(sample(30)).ORIGIN, 'LAX');
 assert.strictEqual(flight.chooseFlight([sample(0)], '2026-09-10').ident_iata, 'AA100');
+
+var eveningPacificFlight = sample(0);
+eveningPacificFlight.scheduled_out = '2026-09-18T03:30:00Z';
+eveningPacificFlight.estimated_out = '2026-09-18T03:30:00Z';
+assert.strictEqual(flight.chooseFlight([eveningPacificFlight], '2026-09-17').ident_iata, 'AA100');
+assert.strictEqual(flight.toMessage(eveningPacificFlight).FLIGHT_DATE, '2026-09-17');
+assert.strictEqual(flight.toMessage(eveningPacificFlight).DEPARTURE_TIME, '8:30 PM');
 
 var hour = 60 * 60 * 1000;
 var day = 24 * hour;
