@@ -34,9 +34,9 @@
       "ARRIVAL_TERMINAL": 12,
       "UPDATED_AT": 13,
       "ERROR_MESSAGE": 14,
-      "IS_LOADING": 15
+      "IS_LOADING": 15,
+      "REQUEST_NEXT_FLIGHT": 16
     },
     "resources": {"media": []}
   }
 }
-

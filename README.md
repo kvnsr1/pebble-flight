@@ -6,7 +6,7 @@ A Pebble Time 2 flight-status app inspired by the glanceable parts of Flighty. I
 
 - The native C watch app targets `emery` (Pebble Time 2).
 - PebbleKit JS runs in the Pebble phone app, calls FlightAware AeroAPI, caches the last successful response, and sends a compact message to the watch.
-- The settings page collects flight number, departure date, and an AeroAPI key.
+- The settings page stores up to three flights and one AeroAPI key.
 
 The watch itself does not have internet access, so the connected phone is required for fresh data. Gate and terminal values are shown as `--` when an airline/airport has not published them.
 
@@ -63,17 +63,18 @@ For a fresh installation on another Mac, use the steps below.
 2. Publish the `config/` folder as a static HTTPS site (GitHub Pages works).
 3. Replace `CONFIG_URL` near the top of `src/pkjs/index.js` with that HTTPS URL.
 4. Rebuild and install the app.
-5. Open Pebble Flight's settings in the phone app, then enter an IATA/ICAO flight identifier such as `AA100`, its departure date, and the key.
+5. Open Pebble Flight's settings in the phone app, then enter up to three IATA/ICAO flight identifiers such as `AA100`, their departure dates, and the key.
 
 For personal testing, the key is stored in the Pebble phone app's local storage and sent in AeroAPI's `x-apikey` header. It is never passed to the hosted settings page. Do not ship a public build this way: FlightAware does not support browser-side CORS requests and recommends a backend application server. Put AeroAPI behind a small serverless proxy so users cannot extract or abuse your key. FlightAware's current Personal terms are for personal/academic derivative use; a public consumer app requires the appropriate commercial tier.
 
 ## Controls
 
 - **Up / Down:** move between Summary, Departure, and Arrival.
-- **Select:** refresh flight data.
+- **Select:** refresh the visible flight.
+- **Long-press Select:** switch to the next saved flight.
 - **Back:** exit.
 
-While the app is open, it also refreshes every 10 minutes. Continuous background alerts are a later phase and should use FlightAware Flight Alerts plus a secure push service rather than aggressive polling.
+While the app is open, it refreshes only the visible flight every 10 minutes. Continuous background alerts are a later phase and should use FlightAware Flight Alerts plus a secure push service rather than aggressive polling.
 
 ## Delay rules
 
