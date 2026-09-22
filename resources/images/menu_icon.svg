@@ -1,12 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 25 25">
-  <rect width="25" height="25" rx="5" fill="#05090d"/>
-  <circle cx="12.5" cy="12.5" r="9.5" fill="none" stroke="#c5cbd1" stroke-width="2.4"/>
-  <g fill="#f7fbff" shape-rendering="crispEdges">
-    <rect x="11" y="5" width="4" height="15"/>
-    <rect x="10" y="7" width="6" height="9"/>
-    <path d="M12 4h2l2 3H10Z"/>
-    <path d="M3 14 11 9h4l7 5v3l-8-3h-2l-9 3Z"/>
-    <path d="m7 20 5-4h2l4 4v2l-5-2-6 2Z"/>
-  </g>
-  <rect x="11" y="7" width="4" height="2" fill="#42d7ff" shape-rendering="crispEdges"/>
+  <!-- Circular badge keeps the icon legible on both light and dark app menus. -->
+  <circle cx="12.5" cy="12.5" r="11.5" fill="#071019"/>
+  <circle cx="12.5" cy="12.5" r="10" fill="none" stroke="#cbd1d6" stroke-width="2"/>
+
+  <!-- Simplified top-down passenger jet, drawn for the 25 px menu surface. -->
+  <path d="M12.5 3.5
+           C11.6 3.5 11 4.3 11 5.4
+           L10.7 10.2 4.7 14.1
+           L4.7 16.4 10.8 14.2
+           L10.9 18.1 8.6 20.2
+           L8.6 21.6 12.5 20.2
+           L16.4 21.6 16.4 20.2 14.1 18.1
+           L14.2 14.2 20.3 16.4
+           L20.3 14.1 14.3 10.2 14 5.4
+           C14 4.3 13.4 3.5 12.5 3.5Z"
+        fill="#f8fafc" stroke="#7c858d" stroke-width="0.8" stroke-linejoin="miter"/>
+  <path d="M11.7 6.1h1.6l.2 2.1h-2Z" fill="#071019" shape-rendering="crispEdges"/>
 </svg>
