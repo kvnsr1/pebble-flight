@@ -63,7 +63,7 @@ For a fresh installation on another Mac, use the steps below.
 2. Publish the `config/` folder as a static HTTPS site (GitHub Pages works).
 3. Replace `CONFIG_URL` near the top of `src/pkjs/index.js` with that HTTPS URL.
 4. Rebuild and install the app.
-5. Open Pebble Flight's settings in the phone app, then enter up to three IATA/ICAO flight identifiers such as `AA100`, their departure dates, and the key. Booking code, seat number, and window/middle/aisle position are optional per flight.
+5. Open Pebble Flight's settings in the phone app, then enter up to three IATA/ICAO flight identifiers such as `AA100`, their departure dates, and the key. Booking code and seat number are optional per flight. Seats ending in A/F, B/E, or C/D automatically map to window, middle, or aisle; the detected position can be overridden. Each flight card also has a button to clear all of its details.
 
 For personal testing, the key is stored in the Pebble phone app's local storage and sent in AeroAPI's `x-apikey` header. It is never passed to the hosted settings page. Do not ship a public build this way: FlightAware does not support browser-side CORS requests and recommends a backend application server. Put AeroAPI behind a small serverless proxy so users cannot extract or abuse your key. FlightAware's current Personal terms are for personal/academic derivative use; a public consumer app requires the appropriate commercial tier.
 

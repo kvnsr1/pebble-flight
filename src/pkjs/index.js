@@ -19,13 +19,20 @@ function localToday() {
 function cleanFlights(flights) {
   if (!Array.isArray(flights)) { return []; }
   return flights.slice(0, 3).map(function(flight) {
+    var seatNumber = String(flight.seatNumber || '').trim().toUpperCase().slice(0, 3);
+    var inferredPosition = flightTools.seatPositionFor(seatNumber);
+    var savedPosition = /^(window|middle|aisle)$/.test(flight.seatPosition) ?
+      flight.seatPosition : '';
+    var isLegacyOverride = typeof flight.seatPositionOverride === 'undefined' &&
+      savedPosition && savedPosition !== inferredPosition;
+    var hasOverride = flight.seatPositionOverride === true || isLegacyOverride;
     return {
       flightNumber: String(flight.flightNumber || '').trim().toUpperCase(),
       flightDate: String(flight.flightDate || '').trim(),
       bookingCode: String(flight.bookingCode || '').trim().toUpperCase().slice(0, 12),
-      seatNumber: String(flight.seatNumber || '').trim().toUpperCase().slice(0, 6),
-      seatPosition: /^(window|middle|aisle)$/.test(flight.seatPosition) ?
-        flight.seatPosition : ''
+      seatNumber: seatNumber,
+      seatPosition: hasOverride ? savedPosition : (inferredPosition || savedPosition),
+      seatPositionOverride: Boolean(hasOverride)
     };
   }).filter(function(flight) {
     return flight.flightNumber && flight.flightDate;

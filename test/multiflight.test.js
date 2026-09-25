@@ -60,15 +60,18 @@ handlers.webviewclosed({
   response: encodeURIComponent(JSON.stringify({
     apiKey: '',
     flights: [
-      {flightNumber: 'AS1', flightDate: '2026-11-01', bookingCode: 'NEW456', seatNumber: '8C', seatPosition: 'aisle'},
-      {flightNumber: 'AS2', flightDate: '2026-11-02'},
+      {flightNumber: 'AS1', flightDate: '2026-11-01', bookingCode: 'NEW456', seatNumber: '8C', seatPosition: 'window', seatPositionOverride: true},
+      {flightNumber: 'AS2', flightDate: '2026-11-02', seatNumber: '9F'},
       {flightNumber: 'AS3', flightDate: '2026-11-03'},
       {flightNumber: 'AS4', flightDate: '2026-11-04'}
     ]
   }))
 });
 assert.strictEqual(JSON.parse(storage['pebbleFlight.flights']).length, 3);
-assert.strictEqual(JSON.parse(storage['pebbleFlight.flights'])[0].seatPosition, 'aisle');
+assert.strictEqual(JSON.parse(storage['pebbleFlight.flights'])[0].seatPosition, 'window');
+assert.strictEqual(JSON.parse(storage['pebbleFlight.flights'])[0].seatPositionOverride, true);
+assert.strictEqual(JSON.parse(storage['pebbleFlight.flights'])[1].seatPosition, 'window');
+assert.strictEqual(JSON.parse(storage['pebbleFlight.flights'])[1].seatPositionOverride, false);
 assert.strictEqual(storage['pebbleFlight.activeIndex'], '0');
 
 console.log('Multi-flight settings tests passed');

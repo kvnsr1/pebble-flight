@@ -116,6 +116,22 @@
     }
     input::placeholder { color: #647a8e; }
     input:focus, select:focus { border-color: var(--sky); background: rgba(5, 19, 31, .96); box-shadow: 0 0 0 3px rgba(66, 215, 255, .13); }
+    .seat-help { min-height: 1.15em; }
+    .clear-flight {
+      display: block;
+      width: auto;
+      min-height: 38px;
+      margin: 14px 0 0 auto;
+      padding: 8px 12px;
+      border: 1px solid rgba(174, 203, 225, .28);
+      border-radius: 10px;
+      background: rgba(5, 19, 31, .32);
+      box-shadow: none;
+      color: #b9cad8;
+      font-size: .84rem;
+      font-weight: 750;
+    }
+    .clear-flight:hover { border-color: rgba(255, 116, 116, .62); background: rgba(116, 35, 42, .22); box-shadow: none; color: #ffd3d3; }
     .key-panel { margin-top: 18px; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: rgba(9, 27, 42, .8); }
     .key-panel label { margin-top: 0; color: var(--ink); }
     small { display: block; margin-top: 8px; color: var(--muted); font-size: .8rem; line-height: 1.4; }
@@ -188,6 +204,46 @@
     return value ? value.toUpperCase() : fallback;
   }
 
+  function inferSeatPosition(value) {
+    var match = String(value || '').trim().toUpperCase().match(/^[1-9]\d?([A-F])$/);
+    if (!match) { return ''; }
+    if (match[1] === 'A' || match[1] === 'F') { return 'window'; }
+    if (match[1] === 'B' || match[1] === 'E') { return 'middle'; }
+    return 'aisle';
+  }
+
+  function positionLabel(value) {
+    return value ? value.charAt(0).toUpperCase() + value.slice(1) : '';
+  }
+
+  function updateSeatPosition(index) {
+    var seatInput = document.getElementById('seatNumber' + index);
+    var positionInput = document.getElementById('seatPosition' + index);
+    var help = document.getElementById('seatHelp' + index);
+    var inferred = inferSeatPosition(seatInput.value);
+    positionInput.options[0].textContent = inferred ?
+      'Auto — ' + positionLabel(inferred) : 'Auto — enter seat';
+    if (positionInput.value === 'auto') {
+      help.textContent = inferred ?
+        'Detected ' + positionLabel(inferred) + ' from seat ' + seatInput.value.trim().toUpperCase() + '.' :
+        'Use a seat such as 12A to detect its position.';
+    } else {
+      help.textContent = 'Manual override: ' + positionLabel(positionInput.value) + '.';
+    }
+  }
+
+  function clearFlight(index) {
+    ['flightNumber', 'flightDate', 'bookingCode', 'seatNumber'].forEach(function(prefix) {
+      var input = document.getElementById(prefix + index);
+      input.value = '';
+      input.setCustomValidity('');
+    });
+    document.getElementById('seatPosition' + index).value = 'auto';
+    updateCard(index);
+    updateSeatPosition(index);
+    document.getElementById('flightNumber' + index).focus();
+  }
+
   function updateCard(index) {
     var card = document.getElementById('flightCard' + index);
     var number = document.getElementById('flightNumber' + index).value.trim();
@@ -222,22 +278,43 @@
         'spellcheck="false" maxlength="12"></div>' +
       '<div><label for="seatNumber' + i + '">Seat number</label>' +
         '<input id="seatNumber' + i + '" placeholder="12A" autocapitalize="characters" autocomplete="off" ' +
-        'spellcheck="false" maxlength="6"></div></div>' +
+        'spellcheck="false" maxlength="3" inputmode="text" pattern="[1-9][0-9]?[A-Fa-f]"></div></div>' +
       '<div><label for="seatPosition' + i + '">Seat position</label>' +
-        '<select id="seatPosition' + i + '"><option value="">Choose position</option>' +
+        '<select id="seatPosition' + i + '"><option value="auto">Auto — enter seat</option>' +
         '<option value="window">Window</option><option value="middle">Middle</option>' +
-        '<option value="aisle">Aisle</option></select></div>';
+        '<option value="aisle">Aisle</option></select>' +
+        '<small class="seat-help" id="seatHelp' + i + '">Use a seat such as 12A to detect its position.</small></div>' +
+      '<button class="clear-flight" id="clearFlight' + i + '" type="button">Clear flight details</button>';
     flights.appendChild(fieldset);
     document.getElementById('flightNumber' + i).value = number;
     document.getElementById('flightDate' + i).value = date || (i === 1 ? localToday : '');
     document.getElementById('bookingCode' + i).value = savedFlight.bookingCode || '';
     document.getElementById('seatNumber' + i).value = savedFlight.seatNumber || '';
-    document.getElementById('seatPosition' + i).value = savedFlight.seatPosition || '';
+    var inferredPosition = inferSeatPosition(savedFlight.seatNumber || '');
+    var isLegacyOverride = typeof savedFlight.seatPositionOverride === 'undefined' &&
+      savedFlight.seatPosition && savedFlight.seatPosition !== inferredPosition;
+    var hasPositionOverride = savedFlight.seatPositionOverride === true || isLegacyOverride;
+    document.getElementById('seatPosition' + i).value = hasPositionOverride ? savedFlight.seatPosition : 'auto';
     (function(index) {
       document.getElementById('flightNumber' + index).addEventListener('input', function() { updateCard(index); });
       document.getElementById('flightDate' + index).addEventListener('input', function() { updateCard(index); });
+      document.getElementById('seatNumber' + index).addEventListener('input', function() {
+        this.setCustomValidity('');
+        updateSeatPosition(index);
+      });
+      document.getElementById('seatNumber' + index).addEventListener('blur', function() {
+        this.value = this.value.trim().toUpperCase();
+        updateSeatPosition(index);
+      });
+      document.getElementById('seatPosition' + index).addEventListener('change', function() {
+        updateSeatPosition(index);
+      });
+      document.getElementById('clearFlight' + index).addEventListener('click', function() {
+        clearFlight(index);
+      });
     })(i);
     updateCard(i);
+    updateSeatPosition(i);
   }
 
   document.getElementById('flightNumber1').required = true;
@@ -265,18 +342,25 @@
       var date = dateInput.value;
       var bookingCode = bookingInput.value.trim().toUpperCase();
       var seatNumber = seatInput.value.trim().toUpperCase();
-      var seatPosition = positionInput.value;
+      var positionChoice = positionInput.value;
+      var inferredPosition = inferSeatPosition(seatNumber);
+      var seatPosition = positionChoice === 'auto' ? inferredPosition : positionChoice;
       if (number && !date) {
         dateInput.setCustomValidity('Choose a departure date for this flight.');
         dateInput.reportValidity();
         return;
       }
-      if (!number && (date || bookingCode || seatNumber || seatPosition)) {
+      if (!number && (date || bookingCode || seatNumber || positionChoice !== 'auto')) {
         numberInput.setCustomValidity('Enter a flight number or clear this flight card.');
         numberInput.reportValidity();
         return;
       }
-      if (seatPosition && !seatNumber) {
+      if (seatNumber && !inferredPosition) {
+        seatInput.setCustomValidity('Use a row from 1–99 followed by a seat letter A–F, such as 12A.');
+        seatInput.reportValidity();
+        return;
+      }
+      if (positionChoice !== 'auto' && !seatNumber) {
         seatInput.setCustomValidity('Enter a seat number for this position.');
         seatInput.reportValidity();
         return;
@@ -287,7 +371,8 @@
           flightDate: date,
           bookingCode: bookingCode,
           seatNumber: seatNumber,
-          seatPosition: seatPosition
+          seatPosition: seatPosition,
+          seatPositionOverride: positionChoice !== 'auto'
         });
       }
     }

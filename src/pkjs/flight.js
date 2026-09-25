@@ -162,6 +162,14 @@ function valueOrDash(value) {
   return value === null || value === undefined || value === '' ? '--' : String(value);
 }
 
+function seatPositionFor(seatNumber) {
+  var match = String(seatNumber || '').trim().toUpperCase().match(/^[1-9]\d?([A-F])$/);
+  if (!match) { return ''; }
+  if (match[1] === 'A' || match[1] === 'F') { return 'window'; }
+  if (match[1] === 'B' || match[1] === 'E') { return 'middle'; }
+  return 'aisle';
+}
+
 function matchesDate(flight, date) {
   var timezone = flight.origin && flight.origin.timezone;
   return localDate(flight.scheduled_out, timezone) === date ||
@@ -215,6 +223,7 @@ module.exports = {
   localTime: localTime,
   refreshIntervalMs: refreshIntervalMs,
   refreshIsDue: refreshIsDue,
+  seatPositionFor: seatPositionFor,
   statusFor: statusFor,
   toMessage: toMessage,
   toRefreshState: toRefreshState

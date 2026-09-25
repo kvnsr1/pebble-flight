@@ -20,6 +20,14 @@ assert.strictEqual(flight.statusFor(sample(29)).level, 1);
 assert.strictEqual(flight.statusFor(sample(30)).level, 2);
 assert.strictEqual(flight.statusFor(sample(60)).level, 2);
 assert.strictEqual(flight.statusFor(sample(61)).level, 3);
+assert.strictEqual(flight.seatPositionFor('12A'), 'window');
+assert.strictEqual(flight.seatPositionFor('12f'), 'window');
+assert.strictEqual(flight.seatPositionFor('8B'), 'middle');
+assert.strictEqual(flight.seatPositionFor('8E'), 'middle');
+assert.strictEqual(flight.seatPositionFor('1C'), 'aisle');
+assert.strictEqual(flight.seatPositionFor('99D'), 'aisle');
+assert.strictEqual(flight.seatPositionFor('12G'), '');
+assert.strictEqual(flight.seatPositionFor('123A'), '');
 assert.strictEqual(flight.toMessage(sample(30)).ORIGIN, 'LAX');
 assert.strictEqual(flight.chooseFlight([sample(0)], '2026-09-10').ident_iata, 'AA100');
 
