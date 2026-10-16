@@ -27,6 +27,19 @@ int main(void) {
   assert(strcmp(flight_field_text((FlightField){FIELD_UNKNOWN,NULL}), "Unknown") == 0);
   assert(strcmp(flight_field_text((FlightField){FIELD_UNAVAILABLE,NULL}), "N/A") == 0);
   assert(strcmp(flight_field_text((FlightField){FIELD_KNOWN,"B7"}), "B7") == 0);
+  assert(booking_seat_position(&mock_flight_at(0)->booking) == SEAT_WINDOW);
+  assert(booking_seat_position(&mock_flight_at(1)->booking) == SEAT_MIDDLE);
+  assert(booking_seat_position(&mock_flight_at(2)->booking) == SEAT_AISLE);
+  assert(booking_seat_position(&mock_flight_at(3)->booking) == SEAT_WINDOW);
+  assert(booking_seat_position(&mock_flight_at(4)->booking) == SEAT_UNKNOWN);
+  assert(strcmp(booking_position_label(&mock_flight_at(5)->booking), "Position N/A") == 0);
+  const char *seat_numbers[] = {"1A", "99F", "2B", "12E", "3C", "14D", "8f", "0A", "100A", "12K", "12", ""};
+  SeatPosition positions[] = {SEAT_WINDOW, SEAT_WINDOW, SEAT_MIDDLE, SEAT_MIDDLE,
+    SEAT_AISLE, SEAT_AISLE, SEAT_WINDOW, SEAT_UNKNOWN, SEAT_UNKNOWN, SEAT_UNKNOWN, SEAT_UNKNOWN, SEAT_UNKNOWN};
+  for (size_t i=0; i<sizeof(positions)/sizeof(positions[0]); i++) {
+    FlightBooking booking = {{FIELD_UNKNOWN,NULL}, {FIELD_KNOWN,seat_numbers[i]}, SEAT_UNKNOWN, false};
+    assert(booking_seat_position(&booking) == positions[i]);
+  }
   PrototypeNavigation nav = {.page = PAGE_LIST};
   navigation_move(&nav,-1,count);
   assert(nav.selected == 0 && nav.top == 0);
@@ -39,7 +52,18 @@ int main(void) {
   navigation_move(&nav,1,count);
   assert(nav.page == PAGE_DEPARTURE);
   navigation_move(&nav,1,count);
+  assert(nav.page == PAGE_ARRIVAL);
   navigation_move(&nav,1,count);
+  navigation_move(&nav,1,count);
+  assert(nav.page == PAGE_BOOKING);
+  navigation_select(&nav,count);
+  assert(nav.note);
+  assert(!navigation_back(&nav));
+  assert(nav.page == PAGE_LIST && nav.selected == 5 && nav.top == 3 && !nav.note);
+  navigation_select(&nav,count);
+  for (int i=0; i<3; i++) { navigation_move(&nav,1,count); }
+  assert(nav.page == PAGE_BOOKING);
+  navigation_move(&nav,-1,count);
   assert(nav.page == PAGE_ARRIVAL);
   navigation_move(&nav,-1,count);
   assert(nav.page == PAGE_DEPARTURE);

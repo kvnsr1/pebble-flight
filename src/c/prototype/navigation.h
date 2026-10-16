@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-enum { PAGE_LIST = -1, PAGE_OVERVIEW, PAGE_DEPARTURE, PAGE_ARRIVAL };
+enum { PAGE_LIST = -1, PAGE_OVERVIEW, PAGE_DEPARTURE, PAGE_ARRIVAL, PAGE_BOOKING };
 enum { VISIBLE_FLIGHTS = 3 };
 typedef struct {
   size_t selected;

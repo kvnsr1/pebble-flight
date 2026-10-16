@@ -59,7 +59,7 @@ static void status_icon(GContext *ctx, FlightStatus status, GPoint p, GColor col
   }
 }
 static void page_indicator(GContext *ctx) {
-  for (int i=0; i<3; i++) {
+  for (int i=0; i<4; i++) {
     graphics_context_set_fill_color(ctx, i==s_nav.page ? GColorWhite : GColorMayGreen);
     graphics_fill_circle(ctx, GPoint(194,88+i*10), i==s_nav.page ? 3 : 2);
   }
@@ -70,7 +70,7 @@ static void page_indicator(GContext *ctx) {
     graphics_draw_line(ctx, GPoint(191,68),GPoint(194,65));
     graphics_draw_line(ctx, GPoint(194,65),GPoint(197,68));
   }
-  if (s_nav.page < PAGE_ARRIVAL) {
+  if (s_nav.page < PAGE_BOOKING) {
     graphics_draw_line(ctx, GPoint(191,130),GPoint(194,133));
     graphics_draw_line(ctx, GPoint(194,133),GPoint(197,130));
   }
@@ -214,6 +214,80 @@ static void draw_airport(GContext *ctx, const Flight *flight, bool departure) {
   text(ctx,flight_field_text(airport->terminal),10,207,88,21,FONT_KEY_GOTHIC_18_BOLD,GColorWhite,GTextAlignmentLeft);
   text(ctx,flight_field_text(airport->facility),106,207,82,21,FONT_KEY_GOTHIC_18_BOLD,GColorWhite,GTextAlignmentLeft);
 }
+static void draw_booking_seat(GContext *ctx, int x, bool selected) {
+  GColor edge=selected?GColorWhite:GColorMayGreen;
+  graphics_context_set_fill_color(ctx,selected?accent():background());
+  graphics_fill_rect(ctx,GRect(x,121,21,29),4,GCornersTop);
+  graphics_fill_rect(ctx,GRect(x,151,21,13),2,GCornersBottom);
+  graphics_context_set_stroke_color(ctx,edge);
+  graphics_context_set_stroke_width(ctx,selected?2:1);
+  graphics_draw_round_rect(ctx,GRect(x,121,21,43),4);
+  graphics_draw_line(ctx,GPoint(x+3,150),GPoint(x+18,150));
+  fill(ctx,GRect(x-3,146,4,16),edge);
+  fill(ctx,GRect(x+20,146,4,16),edge);
+  fill(ctx,GRect(x+3,164,3,6),edge);
+  fill(ctx,GRect(x+15,164,3,6),edge);
+  if (selected) {
+    // A check and solid fill make selection legible without relying on color.
+    graphics_context_set_stroke_color(ctx,background());
+    graphics_context_set_stroke_width(ctx,2);
+    graphics_draw_line(ctx,GPoint(x+5,134),GPoint(x+9,138));
+    graphics_draw_line(ctx,GPoint(x+9,138),GPoint(x+16,131));
+  }
+}
+static void draw_booking(GContext *ctx, const Flight *flight) {
+  const FlightBooking *booking=&flight->booking;
+  char heading[40];
+  snprintf(heading,sizeof(heading),"%s / BOOKING",flight->number);
+  label(ctx,heading,10,1,178);
+
+  // Ticket motif from the live Booking screen, using this prototype's palette.
+  graphics_context_set_stroke_color(ctx,GColorWhite);
+  graphics_context_set_stroke_width(ctx,2);
+  graphics_draw_round_rect(ctx,GRect(11,30,33,23),3);
+  for (int y=34; y<51; y+=5) {
+    graphics_draw_line(ctx,GPoint(34,y),GPoint(34,y+2));
+  }
+  graphics_draw_line(ctx,GPoint(16,38),GPoint(28,38));
+  graphics_draw_line(ctx,GPoint(16,45),GPoint(24,45));
+  graphics_context_set_fill_color(ctx,background());
+  graphics_fill_circle(ctx,GPoint(11,41),3);
+  graphics_fill_circle(ctx,GPoint(44,41),3);
+  label(ctx,"BOOKING CODE",54,33,132);
+  const char *code=flight_field_text(booking->code);
+  const char *code_fonts[]={FONT_KEY_BITHAM_30_BLACK,FONT_KEY_GOTHIC_24_BOLD,FONT_KEY_GOTHIC_18_BOLD};
+  int code_font_index=booking->code.state==FIELD_KNOWN?0:1;
+  // Fit the whole booking reference, including wide 12-character values.
+  while (code_font_index<2) {
+    GSize size=graphics_text_layout_get_content_size(code,font(code_fonts[code_font_index]),
+      GRect(0,0,1000,100),GTextOverflowModeFill,GTextAlignmentLeft);
+    if (size.w<=177) { break; }
+    code_font_index++;
+  }
+  const char *code_font=code_fonts[code_font_index];
+  text(ctx,code,10,58,177,38,code_font,GColorWhite,GTextAlignmentLeft);
+  fill(ctx,GRect(10,101,177,1),GColorMayGreen);
+
+  // Window plus three seats, matching the live app's window/middle/aisle diagram.
+  graphics_context_set_stroke_color(ctx,GColorWhite);
+  graphics_context_set_stroke_width(ctx,2);
+  graphics_draw_round_rect(ctx,GRect(11,125,19,35),8);
+  graphics_draw_round_rect(ctx,GRect(15,129,11,27),5);
+  graphics_draw_line(ctx,GPoint(16,151),GPoint(24,137));
+  SeatPosition position=booking_seat_position(booking);
+  draw_booking_seat(ctx,42,position==SEAT_WINDOW);
+  draw_booking_seat(ctx,71,position==SEAT_MIDDLE);
+  draw_booking_seat(ctx,100,position==SEAT_AISLE);
+  label(ctx,"SEAT",134,112,54);
+  text(ctx,flight_field_text(booking->seat),132,131,56,39,
+       booking->seat.state==FIELD_KNOWN?FONT_KEY_BITHAM_30_BLACK:
+       booking->seat.state==FIELD_UNKNOWN?FONT_KEY_GOTHIC_14_BOLD:FONT_KEY_GOTHIC_18_BOLD,
+       accent(),GTextAlignmentLeft);
+  text(ctx,booking_position_label(booking),10,181,177,25,FONT_KEY_GOTHIC_18_BOLD,
+       GColorWhite,GTextAlignmentLeft);
+  text(ctx,"MOCK / sample booking",10,210,177,18,FONT_KEY_GOTHIC_14,
+       accent(),GTextAlignmentLeft);
+}
 static void draw_note(GContext *ctx, const Flight *flight) {
   label(ctx,"ABOUT THIS FLIGHT",10,3,178);
   text(ctx,flight->number,10,23,176,32,FONT_KEY_GOTHIC_28_BOLD,GColorWhite,GTextAlignmentLeft);
@@ -227,6 +301,7 @@ static void canvas_update(Layer *layer, GContext *ctx) {
   if (!flight) { return; }
   if (s_nav.note) { draw_note(ctx,flight); }
   else if (s_nav.page==PAGE_OVERVIEW) { draw_overview(ctx,flight); }
+  else if (s_nav.page==PAGE_BOOKING) { draw_booking(ctx,flight); }
   else { draw_airport(ctx,flight,s_nav.page==PAGE_DEPARTURE); }
   page_indicator(ctx);
 }

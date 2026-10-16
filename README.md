@@ -27,16 +27,20 @@ graphics and physical buttons.
 (set its branch field as above). Upload Zip also accepts a standard project ZIP
 containing `package.json`, `wscript`, `src/` and `resources/`.
 
+For an existing CloudPebble import linked to this Git remote, pull the latest
+prototype branch and build/run again to get Booking. If the import was not
+linked, import the same branch into a new project using the steps above.
+
 ## Buttons
 
 | Screen | Up / Down | Select | Hold Select (0.7s) | Back |
 |---|---|---|---|---|
 | All Flights | Move selection and scroll; stop at list ends | Open Overview | Toggle empty/filled demo, retaining position | Exit |
-| Detail pages | Overview ↔ Departure ↔ Arrival; stop at ends | Toggle data/timezone note | No action | Return directly to All Flights, retaining selection and scroll |
+| Detail pages | Overview ↔ Departure ↔ Arrival ↔ Booking; stop at ends | Toggle data/timezone note | No action | Return directly to All Flights, retaining selection and scroll |
 | Data note | Close note and move one detail page, respecting limits | Close note | No action | Return directly to All Flights |
 | Empty list | No action | No action | Restore six examples | Exit |
 
-The three right-hand dots show Overview, Departure, Arrival; the active dot is
+The four right-hand dots show Overview, Departure, Arrival, Booking; the active dot is
 larger and white. Tiny arrows indicate available detail pages. Native emulator
 keyboard mappings: Up=`W`/↑, Down=`X`/↓, Select=`S`/→, Back=`Q`/←. CloudPebble
 also provides visible watch buttons; keyboard focus must be on the emulator.
@@ -44,7 +48,7 @@ also provides visible watch buttons; keyboard focus must be on the emulator.
 ## Inspect the mock scenarios
 
 All six examples appear in All Flights. Press Down to select, Select to open,
-Down twice for the airports, Back to return. No rebuild is required. Each is an
+Down twice for the airports and once more for Booking, Back to return. No rebuild is required. Each is an
 independent frozen example rather than a live shared clock.
 
 | Row | Flight / route | Scenario and edge cases |
@@ -56,6 +60,39 @@ independent frozen example rather than a live shared clock.
 | 5 | AF83 / SFO → CDG | Delayed 75m; unknown gate, unavailable baggage; long airport name; next-day CEST arrival |
 | 6 | EK202 / JFK → DXB | Canceled; schedules retained; current times, terminal, gate and baggage unavailable; EDT → GST |
 | Hold Select on list | Empty list | No selectable rows; hold again to restore the prior position |
+
+## Booking — fourth detail page
+
+Press **Down from Arrival** to open Booking; **Up** returns to Arrival. Down
+stops at Booking. Select opens/closes the same data note as the other detail
+pages, and Back returns directly to the preserved list, including from the note.
+
+Booking mirrors the live app's fifth screen: ticket motif, booking code, seat
+number, and a window/middle/aisle seat diagram with the matching seat highlighted.
+The selected seat also has a checkmark and its position written below the
+diagram. Its green background, mint accents and native fonts match the prototype.
+Other screen content and layouts are unchanged; their right-edge navigation
+indicator adds a fourth dot and Arrival now has a next-page arrow.
+
+| Flight | Synthetic booking code | Seat | Position behavior |
+|---|---|---|---|
+| AA100 | Q7M2KP | 12A | Window, automatic |
+| UA206 | R4N8VX | 18B | Middle, automatic |
+| BA284 | K8T3WL | 21C | Aisle, automatic |
+| DL418 | V2H6FQ | 8C | Window, saved override takes priority |
+| AF83 | DEMO12345678 | Unknown | No seat highlighted; tests maximum 12-character code |
+| EK202 | N/A | N/A | Unavailable data; no seat highlighted |
+
+The automatic rule matches the existing live app for rows 1–99: A/F → window,
+B/E → middle, C/D → aisle. Saved manual positions take priority. Other letters
+are not guessed. Unknown and unavailable values remain distinct. Cancellation
+does not itself erase booking details; EK202 explicitly models unavailable data.
+
+As in the live app, the watch screen is read-only. Production booking/seat edits,
+automatic position detection, manual overrides and clearing remain in the existing
+phone settings integration, which is unchanged. Prototype booking values are
+fixtures only; the footer says **MOCK / sample booking** rather than claiming
+they are stored on a phone. No personal booking information is read or sent.
 
 ## Time, status and progress
 
@@ -91,6 +128,7 @@ installed toolchain version.
 | `src/c/prototype/flight_model.h` | Provider-neutral flight, airport, time and presence model |
 | `src/c/prototype/mock_flights.c` | Only fixture source; six deterministic examples |
 | `src/c/prototype/navigation.*` | Selection, scroll position, bounded detail navigation |
+| `src/c/prototype/booking.c` | Seat-position rules and saved override behavior matching the live app |
 | `src/c/prototype/prototype_ui.c` | Native Layer/GContext rendering and button handlers |
 | `src/c/prototype/pebble_plane.c` | PebbleOS 25px flight icon translated into GPaths |
 | `src/c/main.c` | Original five-page live app behind the mode switch |

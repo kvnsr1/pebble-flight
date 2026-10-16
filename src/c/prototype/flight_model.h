@@ -27,6 +27,13 @@ typedef enum {
   FLIGHT_UPCOMING, FLIGHT_BOARDING, FLIGHT_IN_FLIGHT,
   FLIGHT_LANDED, FLIGHT_DELAYED, FLIGHT_CANCELED
 } FlightStatus;
+typedef enum { SEAT_UNKNOWN, SEAT_WINDOW, SEAT_MIDDLE, SEAT_AISLE } SeatPosition;
+typedef struct {
+  FlightField code;
+  FlightField seat;
+  SeatPosition position;
+  bool position_override; // Saved phone setting takes precedence over auto A-F.
+} FlightBooking;
 typedef struct {
   const char *number;
   const char *date;        // Departure date shown in All Flights.
@@ -34,6 +41,7 @@ typedef struct {
   int progress_percent;    // Explicit data, never calculated from local strings.
   FlightAirport departure;
   FlightAirport arrival;
+  FlightBooking booking;
 } Flight;
 
 const Flight *mock_flight_at(size_t index);
@@ -41,3 +49,5 @@ size_t mock_flight_count(void);
 const char *flight_status_label(FlightStatus status);
 const char *flight_field_text(FlightField field);
 int flight_progress(const Flight *flight); // -1 = no journey (canceled).
+SeatPosition booking_seat_position(const FlightBooking *booking);
+const char *booking_position_label(const FlightBooking *booking);

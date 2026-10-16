@@ -15,7 +15,8 @@ static const Flight s_flights[] = {
       KNOWN("8"), UNKNOWN },
     { "LHR", "London Heathrow Airport",
       { "06:20", NULL, "17 OCT", "BST", 60, TIME_UNKNOWN, false, 0 },
-      KNOWN("3"), NA }
+      KNOWN("3"), NA },
+    { KNOWN("Q7M2KP"), KNOWN("12A"), SEAT_UNKNOWN, false }
   },
   {
     "UA206", "16 OCT", FLIGHT_BOARDING, 0,
@@ -24,7 +25,8 @@ static const Flight s_flights[] = {
       KNOWN("3"), KNOWN("F12") },
     { "ORD", "Chicago O'Hare International Airport",
       { "15:10", "15:10", "16 OCT", "CDT", -300, TIME_ESTIMATED, true, 0 },
-      KNOWN("1"), UNKNOWN }
+      KNOWN("1"), UNKNOWN },
+    { KNOWN("R4N8VX"), KNOWN("18B"), SEAT_UNKNOWN, false }
   },
   {
     "BA284", "16 OCT", FLIGHT_IN_FLIGHT, 62,
@@ -33,7 +35,8 @@ static const Flight s_flights[] = {
       KNOWN("I"), KNOWN("A6") },
     { "LHR", "London Heathrow Airport",
       { "11:10", "10:58", "17 OCT", "BST", 60, TIME_ESTIMATED, true, -12 },
-      KNOWN("5"), UNKNOWN }
+      KNOWN("5"), UNKNOWN },
+    { KNOWN("K8T3WL"), KNOWN("21C"), SEAT_UNKNOWN, false }
   },
   {
     "DL418", "16 OCT", FLIGHT_LANDED, 100,
@@ -42,7 +45,8 @@ static const Flight s_flights[] = {
       KNOWN("3"), KNOWN("32B") },
     { "JFK", "John F. Kennedy International Airport",
       { "15:30", "15:48", "16 OCT", "EDT", -240, TIME_ACTUAL, true, 18 },
-      KNOWN("4"), KNOWN("B7") }
+      KNOWN("4"), KNOWN("B7") },
+    { KNOWN("V2H6FQ"), KNOWN("8C"), SEAT_WINDOW, true }
   },
   {
     "AF83", "16 OCT", FLIGHT_DELAYED, 0,
@@ -51,7 +55,8 @@ static const Flight s_flights[] = {
       KNOWN("I"), UNKNOWN },
     { "CDG", "Paris Charles de Gaulle International Airport",
       { "11:15", "12:30", "17 OCT", "CEST", 120, TIME_ESTIMATED, true, 75 },
-      KNOWN("2E"), NA }
+      KNOWN("2E"), NA },
+    { KNOWN("DEMO12345678"), UNKNOWN, SEAT_UNKNOWN, false }
   },
   {
     "EK202", "16 OCT", FLIGHT_CANCELED, 0,
@@ -60,7 +65,8 @@ static const Flight s_flights[] = {
       NA, NA },
     { "DXB", "Dubai International Airport",
       { "20:00", NULL, "17 OCT", "GST", 240, TIME_UNAVAILABLE, false, 0 },
-      NA, NA }
+      NA, NA },
+    { NA, NA, SEAT_UNKNOWN, false }
   }
 };
 

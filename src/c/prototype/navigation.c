@@ -6,7 +6,7 @@ void navigation_move(PrototypeNavigation *nav, int delta, size_t count) {
   nav->note = false;
   if (nav->page != PAGE_LIST) {
     int page = nav->page + delta;
-    if (page >= PAGE_OVERVIEW && page <= PAGE_ARRIVAL) { nav->page = page; }
+    if (page >= PAGE_OVERVIEW && page <= PAGE_BOOKING) { nav->page = page; }
   } else if (!nav->empty && count) {
     int selected = (int)nav->selected + delta;
     if (selected < 0 || selected >= (int)count) { return; }
