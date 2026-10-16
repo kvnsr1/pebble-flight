@@ -1,126 +1,120 @@
-# Validation — 16 October 2026
+# Validation — Pebble Flight 0.7.0
 
-## Environment and build
+Reviewed 16 October 2026. The approved interface is now the default live app;
+[the prototype-only validation history](PROTOTYPE_VALIDATION.md) is retained.
 
-- Native C / PebbleKit JS project, SDK metadata `3`, only `emery`.
-- Installed Pebble Tool **5.0.40**, active SDK **4.33.1**, Apple Silicon macOS.
-- Default mock-mode `pebble build`, including Booking: **passed**. Final RAM footprint **9,440
-  bytes / 128 KB**, resources **4,342 bytes / 256 KB**, available heap **121,632
-  bytes**. Output: `build/pebble-flight.pbw`.
-- Preserved live fallback (`PEBBLE_UI_PROTOTYPE=0`): **compiled and installed**
-  successfully. Its original setup screen displayed the phone-service message
-  “Open phone settings to add flights and an AeroAPI key”, confirming native
-  mode handshake and real companion startup. No key or API lookup was used.
-- Restored `PEBBLE_UI_PROTOTYPE=1`, rebuilt and reinstalled. This is the delivered
-  source and PBW. Final source compiles without C compiler warnings. The SDK's
-  linker emits its existing ELF LOAD-segment RWX warning in both modes.
+## Build and identity
 
-## Automated checks
+- Pebble Tool **5.0.40**, SDK **4.33.1**, native SDK metadata **3**, **emery** only.
+- Both final live and mock modes compiled successfully. Default source has
+  `PEBBLE_MOCK_DATA=0`, `PEBBLE_USE_LEGACY_UI=0`.
+- Live RAM footprint: **35,875 / 131,072 bytes**, available heap **95,197 bytes**.
+  The retained mock mode also compiled successfully.
+  Resource pack: **4,342 bytes** in both.
+- Final bundle is `build/pebble-flight.pbw`. Verified its embedded display name
+  **Pebble Flight** and original UUID `e6fc90f6-5f5a-4f34-a18e-76f13a5b2327`.
+  Verified a known mock booking fixture is absent from the normal bundle; fixture
+  C data is compiled only in mock mode.
+- No C compiler warnings. The SDK linker emits its ELF LOAD-segment RWX warning.
+- npm dependencies installed successfully; pinned Moment Timezone **0.6.5** and
+  transitive Moment **2.31.0** are recorded in `package-lock.json`. SDK build
+  bundled the phone JS successfully; the companion loaded in the actual emulator.
 
-`sh scripts/test.sh` passed all four suites:
+## Automated suites
 
-1. Existing flight transformation/delay/refresh rules (`flight.test.js`).
-2. Existing multi-flight settings, booking and seat behavior
-   (`multiflight.test.js`, now exercising the moved `live.js` service).
-3. Phone service isolation: no production require/storage/network before live
-   handshake; duplicate replies do not start it twice (`prototype_mode.test.js`).
-4. Native C fixture coverage, progress semantics, signed early/late examples,
-   overnight local dates, field presence, list/detail limits, reverse navigation,
-   note behavior, selection/scroll restoration, empty toggling, and booking
-   seat-position detection/manual overrides
-   (`prototype.test.c`, host compiler with `-Wall -Wextra -Werror`).
+`sh scripts/test.sh` passed all six suites:
 
-`git diff --check` passed.
+1. Existing flight transformation, delay thresholds, adaptive refresh and
+   automatic seat-position rules.
+2. Existing multi-flight settings, booking/seat storage and manual overrides.
+3. Mock startup isolation, live startup gating, duplicate-mode cached resync
+   without restarting the service, and explicit phone settings.
+4. Native mock scenarios, progress semantics, bounded four-page navigation,
+   list selection/scroll restoration, missing fields and booking positions.
+5. New production adapter and companion tests: scheduled/current airport-local
+   times; overnight dates; DST fall-back; fractional UTC offset; unknown timezone;
+   explicit operational state/progress; gate versus runway basis; null versus
+   unavailable fields; legacy cached-route fallback; separate duplicate entries;
+   serialized/coalesced snapshots; synthetic HTTP success/error callbacks; an
+   out-of-order response after switching flights; API-key exclusion from payloads;
+   phone settings without starting a lookup; landed-flight retention; explicit
+   post-landing refresh; clearing all flights into an empty list.
+6. New native store tests: atomic multi-flight snapshots, owned string lifetimes,
+   stale/out-of-order generations, invalid counts/statuses/indices and empty state.
 
-## Initial three-page native emulator review
+The C tests use `-Wall -Wextra -Werror`. `git diff --check` passed.
 
-Ran the compiled app in the **local SDK Emery QEMU emulator**, at **200×228**.
-The review script sends physical-button press/release events through
-`pebble emu-button` and captures the native framebuffer through
-`pebble screenshot`. These images are not browser approximations.
+## Native emulator
 
-- Captured and visually inspected **all six scenarios on Overview, Departure,
-  Arrival**, plus their selected list states, the empty list and the data note.
-- **39 framebuffer comparisons passed**: list start/end limits, detail start/end
-  limits for every scenario, reverse page order, Back preserving selection and
-  scroll pixels for every row, note open/close, Back directly from a note,
-  detail long Select, empty-state safe Up/Down/Select, and empty/filled restoration.
-- Scrolled through all six flights with Up/Down and opened each with Select.
-- Inspected long airport names, missing gate/baggage, explicit schedule versus
-  estimate/actual labels, early/late text, next-day dates and endpoint timezones.
-- Confirmed canceled has X / NO JOURNEY and no plane/progress value, upcoming
-  and boarding stay at 0%, in-flight shows 62%, and landed shows 100%.
-- A visual pass found the 100% label too close to its arc. Reduced that label's
-  font, rebuilt, and captured/inspected the landed Overview again. The navigation
-  code was unchanged by this final layout adjustment.
-- No text clipping or unreadable overlap remained in these fixture screenshots.
-  Readability was evaluated on emulator images, not physical hardware.
+Tested the compiled application in the **actual local Emery QEMU emulator** at
+**200×228**, using `pebble emu-button`, `pebble send-app-message` and
+`pebble screenshot`.
 
-See [contact sheet](screenshots/contact-sheet.png), individual PNGs in
-`screenshots/`, and [machine-readable comparison results](screenshots/navigation-results.json).
-Reproduce with `python3 scripts/review-prototype.py` (Pillow and Pebble CLI
-required; built mock PBW required). The script leaves the filled list restored.
+### Approved design regression
 
-## Booking extension verification
+- Ran all six mock flights through All Flights, Overview, Departure, Arrival and
+  Booking, plus the data note and empty list.
+- **90 framebuffer comparisons passed** for page limits, reverse navigation,
+  Select/note actions, Back restoring list position, empty toggling and unchanged
+  screen content.
+- An additional full-image comparison verified **all 32 individual mock screen
+  framebuffers match approved commit `fc135ba` pixel for pixel**, including the
+  right-hand navigation strip. The live integration does not restyle the design.
+- The final build also retains the fixed mock mode, with no phone/data startup.
+  The frozen preview branch and its distinct app UUID remain unchanged.
 
-Added Booking after Arrival, with booking code, seat number, window/middle/aisle
-diagram and explicit position text. Mock data covers all three automatic
-positions, a saved Window override for seat 8C, a 12-character booking reference,
-a missing seat and unavailable booking data. The original C live UI, phone
-service, settings page, message keys, UUID and build configuration have no changes
-in this extension. The live fallback build/startup check above is from the initial
-prototype review, rather than a new live service test for Booking.
+### Production data path
 
-- Updated the native host tests for the fourth page, stopping at Booking, reverse
-  navigation, Back from Booking/note, and matching live seat-position rules.
-  All four test suites passed again.
-- The updated actual-Emery review completed **90 framebuffer comparisons**.
-  **26** specifically compare existing screen content against the committed
-  pre-Booking screenshots: all six list states and the empty list match in full;
-  Overview, Departure and Arrival for all six scenarios, plus the data note,
-  match outside the rightmost 10 pixels used by the navigation indicator.
-- No existing list, Overview, airport-detail or note rendering function was
-  edited. The only shared visual change is the fourth navigation dot and the
-  next-page arrow on Arrival. No flight/time/airport/status values were changed.
-- Exercised Down from Arrival to Booking, Down stopping at Booking, Up returning
-  to Arrival, Select toggling its note, Back restoring list selection/scroll,
-  reopening the correct selected flight's booking, and long Select doing nothing
-  on Booking. Back from the Booking note also returns directly to the list.
-- Visually inspected all six new Booking screens. Caught and corrected a wrapped
-  Unknown seat label, then rebuilt and recaptured **all six final Booking renders**.
-  The other five Booking renders remained pixel-identical after the correction.
-  Booking references now select a font by measured width so long codes fit.
-- Final native Booking screenshots show complete codes and seat values without
-  clipping; selected positions have both a checkmark and written description.
-  Missing/unavailable seats have no selected chair. All booking values are
-  explicitly synthetic; no real booking, API or phone storage was accessed.
+- Started the live-default app and observed its real empty setup state; no saved
+  flights or credentials were configured in this emulator.
+- `scripts/review-live-ui.py` generated synthetic provider records through the
+  real JS adapter and sent them over actual AppMessage into the production C
+  store and renderer. These are **fixture-driven native tests**, not live airline
+  status checks. No provider requests or settings writes were made by this review.
+- **Seven production framebuffer comparisons passed**: Overview/Booking limits,
+  reverse order, data-note closing and selection restoration, including the third
+  saved flight. This also verifies the list with one to three flights avoids the
+  old mock-only scrollbar division-by-zero condition.
+- Captured/inspected all four live detail screens, list, update/error notes,
+  actions menu, retained Aircraft view, saved-data/unknown-progress state and
+  clearing back to an empty list. Text/seat highlights fit the native display.
+- Rechecked the message path after the final scheduled-timezone fields were added.
+  Separate focused synthetic cases inspect a DST-change departure and a delayed
+  departure crossing local midnight. These verify separate schedule/current zone
+  and date labeling in the native airport page.
+- The CLI Bluetooth toggle did not produce a sustained app-disconnected state
+  across screenshot connections in this emulator. Physical disconnect/reconnect
+  remains unverified. The JS duplicate-mode recovery path is unit-tested; the
+  native app retries its mode handshake while waiting for a phone snapshot.
+- Default bundle was restored to live mode. No real booking information, API key,
+  paid flight lookup, physical watch install or appstore release was involved.
 
-See [Booking scenarios](screenshots/booking-scenarios.png) and the updated
-[contact sheet](screenshots/contact-sheet.png). The complete 90-comparison record
-is in [navigation-results.json](screenshots/navigation-results.json).
+Evidence: [production contact sheet](live-ui/contact-sheet.png),
+[production navigation results](live-ui/results.json),
+[approved mock screenshots](screenshots/contact-sheet.png),
+[mock navigation results](screenshots/navigation-results.json).
+Individual PNGs are unmodified native screenshots. Contact sheets only arrange
+those PNGs for review; they are not simulated watch layouts.
 
-## Remaining CloudPebble verification
+## Remaining checks for CloudPebble and a physical watch
 
-CloudPebble's authenticated import/build/emulator was **not exercised in this
-session**. The source uses the existing standard native project layout and build
-configuration; a local build does not prove CloudPebble import behavior.
+CloudPebble's authenticated import/build/emulator and physical-watch migration
+were not exercised in this session. A real FlightAware lookup also remains
+account-dependent and unverified here.
 
-1. Import repository `kvnsr1/pebble-flight`, branch
-   `codex/native-flight-ui-prototype`; verify Pebble C SDK / SDK 3 / emery.
-2. Confirm `prototype_config.h` has `PEBBLE_UI_PROTOTYPE 1`, compile, choose
-   Emulator / Pebble Time 2 (emery), run Flight Preview.
-3. Scroll through every flight and inspect all four pages. Up must stop on
-   Overview, Down on Booking, and Back must restore both selected row and scroll.
-4. On a detail page, Select opens/closes the data note; Back from the note must
-   return directly to All Flights. Hold Select on All Flights to check the empty
-   state and hold again to restore the same position.
-5. Check Booking's window, middle, aisle, manual-override, missing-seat and
-   unavailable-data examples. Confirm booking codes and seat numbers fit.
-6. Use CloudPebble's Screenshot control to check the same labels and edge cases
-   at its actual rendering scale. Optionally repeat in both browser and cloud
-   emulator settings. No credentials are needed.
+1. Import/pull **main**, using **Pebble C SDK / SDK 3 / emery** and the npm
+   dependency from `package.json`. Compile and run **Pebble Flight**.
+2. Verify existing phone settings survive the update, or enter flights/key for a
+   fresh installation. The UUID and existing storage keys are unchanged; a
+   physical migration was not tested.
+3. Validate one real flight against the provider: correct departure-date match,
+   both airports, separate gate schedule/estimate/actual, operational state,
+   progress, terminal/gate/baggage availability and update timestamp. Confirm
+   account/service access on the phone's JS runtime.
+4. Check all four screens and buttons, hold-Select actions, cached/offline/error
+   behavior, aircraft history and manual/automatic seat positions on that runtime.
+5. To evaluate without credentials, use the frozen preview branch, or enable
+   `PEBBLE_MOCK_DATA=1` in an emulator build and follow the six-scenario table.
 
-No live FlightAware network lookup, physical-watch test, appstore release,
-GitHub Pages deployment, or default-branch merge was performed. The old live UI
-remains available behind the switch; connecting the new list/detail UI to live
-production data is intentionally deferred until design approval.
+Source promotion does not publish or submit an appstore release. No backend,
+FlightAware account, API key or phone-settings site deployment was created.

@@ -1,39 +1,13 @@
 'use strict';
+var airportTime = require('./airport-time');
 
 function localDate(iso, timezone) {
-  if (!iso) { return '--'; }
-  if (timezone && typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
-    try {
-      var formatted = new Intl.DateTimeFormat('en-US', {
-        timeZone: timezone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      }).format(new Date(iso));
-      var parts = formatted.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-      if (parts) { return parts[3] + '-' + parts[1] + '-' + parts[2]; }
-    } catch (ignore) {}
-  }
-  return iso.slice(0, 10);
+  var value = airportTime.local(iso, timezone);
+  return value ? value.format('YYYY-MM-DD') : '--';
 }
-
 function localTime(iso, timezone) {
-  if (!iso || iso.length < 16) { return '--'; }
-  if (timezone && typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
-    try {
-      return new Intl.DateTimeFormat('en-US', {
-        timeZone: timezone,
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      }).format(new Date(iso)).replace(/\s/g, ' ');
-    } catch (ignore) {}
-  }
-  var hour = parseInt(iso.slice(11, 13), 10);
-  var minute = iso.slice(14, 16);
-  var suffix = hour >= 12 ? 'PM' : 'AM';
-  hour = hour % 12 || 12;
-  return hour + ':' + minute + ' ' + suffix;
+  var value = airportTime.local(iso, timezone);
+  return value ? value.format('h:mm A') : '--';
 }
 
 function deviceLocalTime(iso) {
@@ -47,7 +21,9 @@ function deviceLocalTime(iso) {
       }).format(new Date(iso)).replace(/\s/g, ' ');
     } catch (ignore) {}
   }
-  return localTime(iso, 'America/Los_Angeles');
+  var date = new Date(iso);
+  var hour = date.getHours();
+  return (hour % 12 || 12) + ':' + ('0' + date.getMinutes()).slice(-2) + (hour >= 12 ? ' PM' : ' AM');
 }
 
 function deviceLocalDateTime(epoch) {

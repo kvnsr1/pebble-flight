@@ -1,23 +1,31 @@
 {
   "name": "pebble-flight",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "author": "Pebble Flight",
   "private": true,
-  "keywords": ["pebble-app"],
-  "dependencies": {},
+  "keywords": [
+    "pebble-app"
+  ],
+  "dependencies": {
+    "moment-timezone": "0.6.5"
+  },
   "pebble": {
-    "displayName": "Flight Preview",
-    "uuid": "e4baf632-a764-46ec-8262-e90610be4a85",
+    "displayName": "Pebble Flight",
+    "uuid": "e6fc90f6-5f5a-4f34-a18e-76f13a5b2327",
     "projectType": "native",
     "sdkVersion": "3",
     "enableMultiJS": true,
-    "targetPlatforms": ["emery"],
+    "targetPlatforms": [
+      "emery"
+    ],
     "watchapp": {
       "watchface": false,
       "hiddenApp": false,
       "onlyShownOnCommunication": false
     },
-    "capabilities": ["configurable"],
+    "capabilities": [
+      "configurable"
+    ],
     "messageKeys": {
       "REQUEST_REFRESH": 0,
       "FLIGHT_NUMBER": 1,
@@ -51,7 +59,43 @@
       "SEAT_POSITION": 29,
       "REQUEST_AIRCRAFT_DETAILS": 30,
       "REQUEST_MODE": 31,
-      "LIVE_MODE": 32
+      "LIVE_MODE": 32,
+      "UI_COUNT": 33,
+      "UI_INDEX": 34,
+      "UI_GENERATION": 35,
+      "REQUEST_SELECT_FLIGHT": 36,
+      "UI_KEY": 37,
+      "UI_DEP_NAME": 38,
+      "UI_ARR_NAME": 39,
+      "UI_DEP_SCHEDULED": 40,
+      "UI_ARR_SCHEDULED": 41,
+      "UI_DEP_DATE": 42,
+      "UI_ARR_DATE": 43,
+      "UI_DEP_ZONE": 44,
+      "UI_ARR_ZONE": 45,
+      "UI_DEP_OFFSET": 46,
+      "UI_ARR_OFFSET": 47,
+      "UI_DEP_KIND": 48,
+      "UI_ARR_KIND": 49,
+      "UI_DEP_DELAY": 50,
+      "UI_ARR_DELAY": 51,
+      "UI_DEP_DELAY_KNOWN": 52,
+      "UI_ARR_DELAY_KNOWN": 53,
+      "UI_STATUS": 54,
+      "UI_PROGRESS": 55,
+      "UI_DEP_TERMINAL_STATE": 56,
+      "UI_DEP_GATE_STATE": 57,
+      "UI_ARR_TERMINAL_STATE": 58,
+      "UI_BAGGAGE": 59,
+      "UI_BAGGAGE_STATE": 60,
+      "UI_BOOKING_STATE": 61,
+      "UI_SEAT_STATE": 62,
+      "UI_UPDATED": 63,
+      "UI_STALE": 64,
+      "UI_DEP_SCHEDULED_DATE": 65,
+      "UI_ARR_SCHEDULED_DATE": 66,
+      "UI_DEP_SCHEDULED_ZONE": 67,
+      "UI_ARR_SCHEDULED_ZONE": 68
     },
     "resources": {
       "media": [

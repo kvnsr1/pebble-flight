@@ -1,185 +1,142 @@
-# Pebble Flight — native UI prototype
+# Pebble Flight
 
-Interactive **Pebble C SDK** app for **Pebble Time 2 / emery (200×228)**.
-Branch: **`codex/native-flight-ui-prototype`**. Launcher name: **Flight Preview**.
-Mock mode is enabled by default. No credentials, phone configuration or flight
-service is needed. All examples are synthetic and frozen in October 2026.
+**Version 0.7.0** adopts the approved green native design as Pebble Flight's
+current interface. It runs on **Pebble Time 2 / emery (200×228)** using the
+**Pebble C SDK**, with PebbleKit JS providing flight data and phone settings.
 
-The design adapts the supplied reference's green palette, circular progress,
-large airport codes and page dots to Pebble system fonts, 64 colors, native
-graphics and physical buttons.
+The default build uses the existing **live FlightAware integration**. Mock mode
+is off. The original app UUID is restored so this builds as an update to Pebble
+Flight, with the same phone-storage keys for saved flights, API key, booking
+codes, seat positions and cached data.
 
-## Import, build and run in CloudPebble
+## CloudPebble
 
-1. Sign in at [CloudPebble](https://cloudpebble.repebble.com/).
-2. In the project list choose **Import → Import from GitHub**.
-3. Repository: `https://github.com/kvnsr1/pebble-flight`.
-   Branch: **`codex/native-flight-ui-prototype`**. Enter this branch explicitly.
-4. Use **Pebble C SDK / native**, **SDK 3** metadata, target **emery / Pebble
-   Time 2** only. Keep the imported UUID and message keys. CloudPebble's default
-   new-project type may be JavaScript SDK (Alloy); this project uses native C.
-5. Open **Build & Run**, compile, select **Run On → Emulator → emery**, then
-   run/install the successful build. Both browser and cloud emulators support
-   this credential-free prototype.
-6. Use the emulator's physical buttons as below. Do not use Publish.
+1. Sign in to [CloudPebble](https://cloudpebble.repebble.com/).
+2. Import `https://github.com/kvnsr1/pebble-flight`, branch **`main`**, into a
+   new project. This is recommended if your existing project is Flight Preview.
+   For an existing production project linked to GitHub, pull `main` and verify
+   its Settings/UUID and message keys match `package.json` before rebuilding.
+3. Choose **Pebble C SDK / native**, **SDK 3** metadata, target **emery / Pebble
+   Time 2**. Keep the imported UUID, message keys and npm dependency.
+4. Compile in **Build & Run**, then run on **Emulator → emery** or install on
+   your watch through the Pebble phone app's Developer Connection.
+5. In the phone app's Pebble Flight settings, use your existing flights and
+   AeroAPI key, or add them if this is a new installation.
 
 [Open the GitHub import dialog](https://cloudpebble.repebble.com/ide/import/github/kvnsr1/pebble-flight)
-(set its branch field as above). Upload Zip also accepts a standard project ZIP
-containing `package.json`, `wscript`, `src/` and `resources/`.
+(set branch `main`). SDK metadata `3` is the native API generation; the validated
+local toolchain is **SDK 4.33.1 / Pebble Tool 5.0.40**.
 
-For an existing CloudPebble import linked to this Git remote, pull the latest
-prototype branch and build/run again to get Booking. If the import was not
-linked, import the same branch into a new project using the steps above.
+The launcher name is **Pebble Flight**, UUID
+`e6fc90f6-5f5a-4f34-a18e-76f13a5b2327`. No appstore release is published by
+building, importing, or updating this repository.
 
-## Buttons
+## Interface and buttons
 
-| Screen | Up / Down | Select | Hold Select (0.7s) | Back |
-|---|---|---|---|---|
-| All Flights | Move selection and scroll; stop at list ends | Open Overview | Toggle empty/filled demo, retaining position | Exit |
-| Detail pages | Overview ↔ Departure ↔ Arrival ↔ Booking; stop at ends | Toggle data/timezone note | No action | Return directly to All Flights, retaining selection and scroll |
-| Data note | Close note and move one detail page, respecting limits | Close note | No action | Return directly to All Flights |
-| Empty list | No action | No action | Restore six examples | Exit |
+All Flights lists all configured flights, with route, departure date, operational
+status and a clear selected row. The existing phone configuration supports up to
+three flights. Logged landed flights stay until you remove them in settings.
 
-The four right-hand dots show Overview, Departure, Arrival, Booking; the active dot is
-larger and white. Tiny arrows indicate available detail pages. Native emulator
-keyboard mappings: Up=`W`/↑, Down=`X`/↓, Select=`S`/→, Back=`Q`/←. CloudPebble
-also provides visible watch buttons; keyboard focus must be on the emulator.
+The detail sequence is **Overview → Departure → Arrival → Booking**:
 
-## Inspect the mock scenarios
+- **Up / Down:** move through the list or detail pages, stopping at either end.
+- **Select on a flight:** open Overview and fetch that flight if its update is due.
+- **Select on details:** open/close its data note, including update time, next
+  refresh, errors, source/freshness and field meanings.
+- **Hold Select:** open **Refresh flight / Aircraft details / Close**. Refresh
+  bypasses the normal schedule with a 30-second duplicate-request cooldown.
+  An explicit refresh can update baggage after landing; automatic terminal-flight
+  polling remains off. Aircraft details preserve the prior model, registration,
+  unavailable first-flight date and lazy-loaded incoming-leg history.
+- **Back on any main detail or data note:** return directly to All Flights,
+  preserving selection and scroll. Back from Aircraft returns to the main detail.
+- **Back on All Flights:** exit. Phone settings are available even when the watch
+  app is not open.
 
-All six examples appear in All Flights. Press Down to select, Select to open,
-Down twice for the airports and once more for Booking, Back to return. No rebuild is required. Each is an
-independent frozen example rather than a live shared clock.
+Booking retains the ticket motif, booking reference, seat number and highlighted
+window/middle/aisle diagram. Saved seat-position overrides take priority over the
+existing automatic A/F, B/E, C/D rule. Booking values are editable in phone
+settings; the watch view is read-only. No booking details or API key are sent to
+the hosted settings page as a URL query; booking state uses the fragment and the
+key stays in phone storage.
 
-| Row | Flight / route | Scenario and edge cases |
+## Live data behavior
+
+- Refresh, caching, error handling, account configuration and the existing AeroAPI
+  endpoint are retained. Opening another flight selects its exact saved index.
+  Pending responses update their own flight, even after selection changes.
+- The five-minute heartbeat checks the existing adaptive schedule: beyond seven
+  days, no polling; one to seven days, the immediate next flight every six hours;
+  final 24 hours, hourly; final six hours, every 15 minutes; departed, every ten
+  minutes. Canceled and landed flights stop automatic updates.
+- **LIVE** indicates a cached result within the refresh policy; **SAVED** or
+  **OFFLINE** indicates saved/old data, and **WAIT** means an update is in progress.
+  Select opens exact update/source/error details. A failed request preserves data.
+- Times are **24-hour airport-local**, with each endpoint's local date, timezone
+  abbreviation and UTC offset. Bundled Moment Timezone/IANA data handles DST
+  without depending on `Intl` support. Unknown timezones remain explicitly
+  unknown instead of showing UTC as if it were airport-local.
+- Scheduled and estimated/actual **gate** times remain separate. A runway time
+  is never substituted to manufacture a gate estimate or a gate delay. If an
+  estimate/actual crosses to a new local date, the time-row labels show both dates.
+- Boarding, departed/taxiing, airborne, landed, delayed, canceled and diverted are
+  operational states. Unknown gate, terminal or baggage data is not invented.
+  **Unknown** means not reported; **N/A** means unavailable/inapplicable.
+- Progress uses FlightAware's explicit `progress_percent`. Upcoming, boarding,
+  departed/taxiing and pre-departure delayed flights stay at 0%; landed is 100%;
+  canceled has no journey. Missing airborne progress shows **PROGRESS UNKNOWN**.
+  It is never inferred from formatted local times.
+- Old cached routes and booking details remain usable after upgrade. Fields not
+  present in the old cache stay unknown until a successful fresh lookup.
+
+The existing direct AeroAPI/key-on-phone setup remains a personal integration.
+No new backend is deployed here; the original integration notes are preserved in
+[docs/LIVE_APP.md](docs/LIVE_APP.md). A live lookup requires a valid account and
+working service access. Native/adapter tests do not verify account access or
+provider coverage for a real flight.
+
+## Mock mode and approved prototype
+
+The reviewed prototype remains frozen on **`codex/native-flight-ui-prototype`**
+(commit `fc135ba`) with its separate **Flight Preview** UUID. You can import that
+branch into CloudPebble to revisit the original credential-free prototype.
+
+To test the same approved design in the current source, set this one flag in
+`src/c/prototype_config.h`, then rebuild and run **in the emulator**:
+
+```c
+#define PEBBLE_MOCK_DATA 1
+```
+
+Mock mode does not open AppMessage, start polling, or read phone settings on app
+startup. Keep `PEBBLE_USE_LEGACY_UI` at `0`. Hold Select on All Flights toggles the
+empty demo; Select on details toggles the note; detail long Select has no action.
+These controls match the frozen prototype. Set `PEBBLE_MOCK_DATA` back to **0**
+and rebuild for the normal live app. The main app UUID is unchanged by this flag.
+
+| Flight | Fixed synthetic scenario | Booking example |
 |---|---|---|
-| 1 | AA100 / JFK → LHR | Upcoming; estimates not reported, unknown gate, unavailable baggage; next-day arrival; EDT → BST |
-| 2 | UA206 / SFO → ORD | Boarding; on-time estimates; gate F12, baggage unknown; PDT → CDT |
-| 3 | BA284 / SFO → LHR | In flight, fixed 62%; actual departure 12m late, estimated arrival 12m early; next day |
-| 4 | DL418 / LAX → JFK | Landed, 100%; actual departure 5m early, actual arrival 18m late; baggage B7 |
-| 5 | AF83 / SFO → CDG | Delayed 75m; unknown gate, unavailable baggage; long airport name; next-day CEST arrival |
-| 6 | EK202 / JFK → DXB | Canceled; schedules retained; current times, terminal, gate and baggage unavailable; EDT → GST |
-| Hold Select on list | Empty list | No selectable rows; hold again to restore the prior position |
+| AA100 / JFK → LHR | Upcoming, unknown estimates/gate, next-day arrival | Q7M2KP / 12A / Window |
+| UA206 / SFO → ORD | Boarding, on-time estimates, unknown baggage | R4N8VX / 18B / Middle |
+| BA284 / SFO → LHR | In flight at 62%; departure late, arrival early | K8T3WL / 21C / Aisle |
+| DL418 / LAX → JFK | Landed at 100%, actual early/late times | V2H6FQ / 8C / saved Window override |
+| AF83 / SFO → CDG | Delayed 75 minutes, long name, missing gate/baggage | DEMO12345678 / Unknown seat |
+| EK202 / JFK → DXB | Canceled; schedules retained, current times N/A | N/A booking/seat |
 
-## Booking — fourth detail page
+These are independent frozen examples, not airline operational claims.
+[Native prototype screenshots](docs/screenshots/contact-sheet.png) and the
+[original validation record](docs/PROTOTYPE_VALIDATION.md) remain available.
 
-Press **Down from Arrival** to open Booking; **Up** returns to Arrival. Down
-stops at Booking. Select opens/closes the same data note as the other detail
-pages, and Back returns directly to the preserved list, including from the note.
-
-Booking mirrors the live app's fifth screen: ticket motif, booking code, seat
-number, and a window/middle/aisle seat diagram with the matching seat highlighted.
-The selected seat also has a checkmark and its position written below the
-diagram. Its green background, mint accents and native fonts match the prototype.
-Other screen content and layouts are unchanged; their right-edge navigation
-indicator adds a fourth dot and Arrival now has a next-page arrow.
-
-| Flight | Synthetic booking code | Seat | Position behavior |
-|---|---|---|---|
-| AA100 | Q7M2KP | 12A | Window, automatic |
-| UA206 | R4N8VX | 18B | Middle, automatic |
-| BA284 | K8T3WL | 21C | Aisle, automatic |
-| DL418 | V2H6FQ | 8C | Window, saved override takes priority |
-| AF83 | DEMO12345678 | Unknown | No seat highlighted; tests maximum 12-character code |
-| EK202 | N/A | N/A | Unavailable data; no seat highlighted |
-
-The automatic rule matches the existing live app for rows 1–99: A/F → window,
-B/E → middle, C/D → aisle. Saved manual positions take priority. Other letters
-are not guessed. Unknown and unavailable values remain distinct. Cancellation
-does not itself erase booking details; EK202 explicitly models unavailable data.
-
-As in the live app, the watch screen is read-only. Production booking/seat edits,
-automatic position detection, manual overrides and clearing remain in the existing
-phone settings integration, which is unchanged. Prototype booking values are
-fixtures only; the footer says **MOCK / sample booking** rather than claiming
-they are stored on a phone. No personal booking information is read or sent.
-
-## Time, status and progress
-
-- **24-hour airport-local time** throughout. Each endpoint shows its own date
-  and timezone; airport detail pages include the UTC offset for that date,
-  including daylight saving time. Values never depend on the watch timezone.
-- Overview labels SCHED, EST or ACTUAL. Airport pages separate scheduled and
-  estimated/actual values, with numerical early/late status for that endpoint.
-- **Unknown** means not reported; **N/A** means unavailable or inapplicable.
-  Missing estimates stay Unknown on airport pages. Overview falls back to the
-  explicitly labeled schedule. Cancellation preserves schedules and shows N/A
-  for current times. No new estimate is invented.
-- The circular track sweeps 270° from lower left to lower right. Upcoming,
-  boarding and pre-departure delayed flights stay at 0%, with the plane at the
-  start. In-flight progress is explicit model data (62% here). Landed is 100%,
-  with the plane at the end. Canceled shows a muted track, X and NO JOURNEY,
-  with no plane or completed progress. The model clamps airborne values to 0–99.
-- Every status has text and a clock, direction arrow, checkmark or X. Color
-  reinforces the label. Percentages remain fixed during review and are never
-  calculated from timezone-formatted strings.
-
-## Existing architecture and isolation
-
-The original project uses `projectType: native`, `sdkVersion: "3"`,
-`enableMultiJS: true`, and `targetPlatforms: ["emery"]`. These settings and the
-recursive native C/PebbleKit JS `wscript` build remain. Validation used SDK
-**4.33.1**; SDK 3 metadata denotes the native app API generation, not the
-installed toolchain version.
-
-| File | Responsibility |
-|---|---|
-| `src/c/prototype_config.h` | Single compile-time mock/live switch |
-| `src/c/prototype/flight_model.h` | Provider-neutral flight, airport, time and presence model |
-| `src/c/prototype/mock_flights.c` | Only fixture source; six deterministic examples |
-| `src/c/prototype/navigation.*` | Selection, scroll position, bounded detail navigation |
-| `src/c/prototype/booking.c` | Seat-position rules and saved override behavior matching the live app |
-| `src/c/prototype/prototype_ui.c` | Native Layer/GContext rendering and button handlers |
-| `src/c/prototype/pebble_plane.c` | PebbleOS 25px flight icon translated into GPaths |
-| `src/c/main.c` | Original five-page live app behind the mode switch |
-| `src/pkjs/live.js` | Original phone service, moved from index.js; refresh/cache/settings/aircraft/booking retained |
-| `src/pkjs/index.js` | Loads the phone service only after a native LIVE_MODE handshake |
-
-`#define PEBBLE_UI_PROTOTYPE 1` is checked in. It runs entirely on the watch,
-without AppMessage, timers, persistent writes, credentials or services. The
-phone entry point sends only a mode query; it does not load the production
-module or access storage without a native live-mode reply. No second JS switch
-is required. Set the C switch to **0** and rebuild to use the original live app
-and controls; its instructions are preserved in [docs/LIVE_APP.md](docs/LIVE_APP.md).
-Mode 0 is the legacy integration fallback; the new UI still needs a production
-adapter after approval.
-
-This branch uses its own UUID `e4baf632-a764-46ec-8262-e90610be4a85` and display
-name. The published app's UUID `e6fc90f6-5f5a-4f34-a18e-76f13a5b2327` is retained
-only in documentation, so installing Flight Preview does not replace it.
-
-Repository inspection found no GitHub Actions or other checked-in deployment
-workflow. The existing scripts build locally and install in Emery. The existing
-phone settings site at `https://kvnsr1.github.io/pebble-flight/config/` is unchanged;
-no Pages deployment or appstore publication is part of this prototype.
-
-The original phone model carries one current time per endpoint, delay-severity
-status, terminal/gate, aircraft, booking and seat data for up to three saved
-flights. After design approval, add a production adapter to populate this UI's
-neutral model with airport names, separate scheduled/estimated/actual times,
-local dates/offsets, operational state, explicit progress and field presence.
-The old payload does not supply baggage, airport names or progress. Keep those
-Unknown/N/A until provided, keep fixtures separate, and retain existing
-refresh, cache and error behavior. The prototype list currently represents all
-six mock logs; the existing live service's three-flight limit is preserved.
-
-## Local build and tests
-
-With `pebble`, the SDK, Node and a C compiler installed:
+## Local build and validation
 
 ```sh
-git switch codex/native-flight-ui-prototype
+npm ci
 pebble build
 pebble install --emulator emery
 sh scripts/test.sh
-python3 scripts/review-prototype.py
 ```
 
-The last command requires Pillow and reinstalls Flight Preview in the emulator,
-drives physical-button events, saves screenshots and compares framebuffers for
-navigation boundaries and selection/scroll restoration.
-
-The Mac scripts also accept the existing private tool installation:
+Output: `build/pebble-flight.pbw`. To reuse the existing private Mac tools:
 
 ```sh
 export PEBBLE_TOOLS_DIR="$HOME/Developer/pebble-flight/.tools"
@@ -187,19 +144,26 @@ sh scripts/build.sh
 sh scripts/emulator.sh
 ```
 
-Output: `build/pebble-flight.pbw`. See [validation results](docs/VALIDATION.md) and
-[native screenshots](docs/screenshots/contact-sheet.png).
+`scripts/review-prototype.py` exercises all mock scenarios and compares the
+native framebuffer against the approved screens. Enable mock mode and rebuild
+before running it. `scripts/review-live-ui.py` checks the production message path
+using synthetic provider data in an emulator with no saved flights. It does not
+configure credentials or make provider calls. Both need Pillow and `pebble` on PATH.
 
-## Documentation consulted
+See [current validation](docs/VALIDATION.md) for exact test coverage and remaining
+CloudPebble/physical-watch checks. The source directory named `prototype/` now
+contains the shared approved renderer: `live_data.*` and `live_store.*` adapt
+production AppMessages to `flight_model.h`; `mock_flights.c` is compiled only in
+mock mode. The legacy five-page UI remains an optional rollback behind
+`PEBBLE_USE_LEGACY_UI=1`; it is not the default.
 
-- [SDK](https://developer.repebble.com/sdk/)
-- [CloudPebble workflow](https://developer.repebble.com/sdk/cloud/)
-- [CLI and emulator](https://developer.repebble.com/guides/tools-and-resources/pebble-tool/)
-- [Hardware platforms](https://developer.repebble.com/guides/tools-and-resources/hardware-information/)
-- [Interaction patterns](https://developer.repebble.com/guides/design-and-interaction/recommended/)
-- [Drawing primitives](https://developer.repebble.com/docs/c/Graphics/Drawing_Primitives/)
-- [Pebble iconography](https://github.com/pebble-dev/iconography/tree/master)
-- [Icon style guide](https://github.com/pebble-dev/iconography/blob/master/STYLE-GUIDE.md)
+## References
 
-The original PebbleOS SVG and Apache-2.0 license are retained in
-`resources/pebble-iconography/`, with the GPath translation noted in NOTICE.md.
+[CloudPebble](https://developer.repebble.com/sdk/cloud/),
+[Pebble SDK](https://developer.repebble.com/sdk/),
+[CLI/emulator](https://developer.repebble.com/guides/tools-and-resources/pebble-tool/),
+[Pebble iconography](https://github.com/pebble-dev/iconography),
+[Moment Timezone](https://momentjs.com/timezone/docs/).
+The original PebbleOS flight SVG, license and translation notice are retained in
+`resources/pebble-iconography/`. Moment and Moment Timezone MIT licenses are
+retained in `docs/licenses/`.

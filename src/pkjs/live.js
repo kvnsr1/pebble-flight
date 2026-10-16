@@ -9,6 +9,36 @@ var CACHE_KEY = 'pebbleFlight.flightCache';
 var STATE_KEY = 'pebbleFlight.refreshState';
 var DETAILS_KEY = 'pebbleFlight.aircraftDetails';
 var LEGACY_CACHE_KEY = 'pebbleFlight.lastFlight';
+var RAW_CACHE_KEY = 'pebbleFlight.rawCache';
+var nativeUI = false;
+var nativeView = null;
+var nativeSender = null;
+var nativeGeneration = 0;
+var transient = {};
+var requests = {};
+
+function syncNative(config) {
+  var raw = readJson(RAW_CACHE_KEY);
+  var frames = [];
+  var generation = ++nativeGeneration;
+  config.flights.forEach(function(flight, index) {
+    var key = flightKey(flight);
+    var message = cachedMessage(flight);
+    if (message) { decorateMessage(message, config, flight); }
+    var state = transient[key] || {};
+    var refreshState = readJson(STATE_KEY)[key];
+    var interval = flightTools.refreshIntervalMs(refreshState, configuredDepartureMs(flight),
+      key === immediateFlightKey(config, readJson(STATE_KEY)), Date.now());
+    state.stale = Boolean(raw[key] && interval !== null && Date.now() - raw[key].updatedAt > interval);
+    frames.push(nativeView.toMessage(flight, raw[key], message, index, config.flights.length, generation, state));
+  });
+  if (!frames.length) {
+    frames.push({UI_COUNT: 0, UI_INDEX: 0, UI_GENERATION: generation,
+      ERROR_MESSAGE: config.apiKey ? 'Open phone settings to add a flight' : 'Open phone settings to add flights and an AeroAPI key'});
+  }
+  nativeSender(frames);
+}
+
 
 function localToday() {
   var now = new Date();
@@ -53,7 +83,7 @@ function savedFlights() {
 }
 
 function readJson(key) {
-  try { return JSON.parse(localStorage.getItem(key) || '{}'); }
+  try { var value = JSON.parse(localStorage.getItem(key) || '{}'); return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; }
   catch (ignore) { return {}; }
 }
 
@@ -93,7 +123,7 @@ function activeIndex(flights) {
 }
 
 function settings() {
-  var flights = pruneLandedFlights(savedFlights());
+  var flights = nativeUI ? savedFlights() : pruneLandedFlights(savedFlights());
   return {
     apiKey: localStorage.getItem('aeroApiKey') || '',
     flights: flights,
@@ -199,6 +229,19 @@ function decorateMessage(message, config, flight) {
 }
 
 function send(payload) {
+  if (nativeUI) {
+    var config = settings();
+    var selected = currentFlight(config);
+    if (selected) {
+      var key = flightKey(selected);
+      var state = transient[key] || {};
+      if (Object.prototype.hasOwnProperty.call(payload, 'ERROR_MESSAGE')) { state.error = payload.ERROR_MESSAGE; }
+      if (Object.prototype.hasOwnProperty.call(payload, 'IS_LOADING')) { state.loading = Boolean(payload.IS_LOADING); }
+      transient[key] = state;
+    }
+    syncNative(config);
+    return;
+  }
   Pebble.sendAppMessage(payload, function() {}, function(error) {
     console.log('AppMessage failed: ' + JSON.stringify(error));
   });
@@ -232,6 +275,7 @@ function sendPlaceholder(config, flight) {
 }
 
 function showCurrent(config) {
+  if (nativeUI) { syncNative(config); return; }
   var flight = currentFlight(config);
   if (!flight) {
     sendError('Open phone settings to add a flight');
@@ -267,9 +311,10 @@ function refresh(force) {
   }
 
   var selectedKey = flightKey(selected);
+  if (requests[selectedKey]) { showCurrent(config); return; }
   var states = readJson(STATE_KEY);
   var state = states[selectedKey];
-  if (flightTools.isTerminal(state)) {
+  if (flightTools.isTerminal(state) && (!nativeUI || !force)) {
     showCurrent(config);
     return;
   }
@@ -281,7 +326,12 @@ function refresh(force) {
     return;
   }
 
+  // A manual request bypasses the schedule, with a short duplicate-tap cooldown.
+  if (force && state && state.lastRequestAt && Date.now() - state.lastRequestAt < 30000) {
+    showCurrent(config); return;
+  }
   send({IS_LOADING: 1, ERROR_MESSAGE: ''});
+  requests[selectedKey] = true;
   state = state || {};
   state.lastRequestAt = now;
   states[selectedKey] = state;
@@ -296,6 +346,12 @@ function refresh(force) {
   request.setRequestHeader('x-apikey', config.apiKey);
   request.timeout = 15000;
   function sendIfStillSelected(message) {
+    delete requests[selectedKey];
+    if (nativeUI) {
+      transient[selectedKey] = {loading: false, error: message};
+      syncNative(settings());
+      return;
+    }
     var active = currentFlight(settings());
     if (active && flightKey(active) === selectedKey) { sendError(message); }
   }
@@ -312,6 +368,11 @@ function refresh(force) {
         return;
       }
       var message = flightTools.toMessage(flight);
+      var rawCache = readJson(RAW_CACHE_KEY);
+      rawCache[selectedKey] = {flight: flight, updatedAt: Date.now()};
+      writeJson(RAW_CACHE_KEY, rawCache);
+      delete requests[selectedKey];
+      transient[selectedKey] = {loading: false, error: ''};
       var latestStates = readJson(STATE_KEY);
       latestStates[selectedKey] = flightTools.toRefreshState(flight, now);
       writeJson(STATE_KEY, latestStates);
@@ -320,14 +381,16 @@ function refresh(force) {
       decorateMessage(message, config, selected);
       cacheMessage(selected, message);
       var latest = currentFlight(settings());
-      if (latest && flightKey(latest) === selectedKey) { send(message); }
+      if (nativeUI) { syncNative(settings()); }
+      else if (latest && flightKey(latest) === selectedKey) { send(message); }
     } catch (error) {
       sendIfStillSelected('Could not read flight data');
     }
   };
   request.onerror = function() { sendIfStillSelected('Could not reach FlightAware; showing saved data'); };
   request.ontimeout = function() { sendIfStillSelected('Flight lookup timed out'); };
-  request.send();
+  try { request.send(); }
+  catch (error) { sendIfStillSelected('Could not reach FlightAware; showing saved data'); }
 }
 
 function legDetails(flight) {
@@ -417,32 +480,53 @@ function nextFlight() {
   refresh(false);
 }
 
-function start() {
+function enableMode(options) {
+  nativeUI = Boolean(options && options.nativeUI);
+  if (nativeUI && !nativeView) {
+    nativeView = require('./native-view');
+    nativeSender = nativeView.sender(Pebble);
+  }
+}
+function start(options) {
+  enableMode(options);
   var config = settings();
   showCurrent(config);
   refresh(false);
 }
 Pebble.addEventListener('ready', start);
-module.exports = {start: start};
+module.exports = {start: start, sync: function() { if (nativeUI) { syncNative(settings()); } }};
 
 Pebble.addEventListener('appmessage', function(event) {
+  if (nativeUI && Object.prototype.hasOwnProperty.call(event.payload, 'REQUEST_SELECT_FLIGHT')) {
+    var config = settings();
+    var index = Number(event.payload.REQUEST_SELECT_FLIGHT);
+    if (index >= 0 && index < config.flights.length && Math.floor(index) === index) {
+      localStorage.setItem(ACTIVE_KEY, String(index));
+      showCurrent(settings());
+      if (event.payload.REQUEST_AIRCRAFT_DETAILS) { loadAircraftDetails(); }
+      else { refresh(event.payload.REQUEST_REFRESH === 1); }
+    }
+    return;
+  }
   if (event.payload.REQUEST_NEXT_FLIGHT) { nextFlight(); }
   else if (event.payload.REQUEST_AIRCRAFT_DETAILS) { loadAircraftDetails(); }
   else if (event.payload.REQUEST_REFRESH) { refresh(event.payload.REQUEST_REFRESH === 1); }
 });
 
-Pebble.addEventListener('showConfiguration', function() {
+function configure(options) {
+  if (options) { enableMode(options); }
   var config = settings();
   var state = {flights: config.flights, hasApiKey: Boolean(config.apiKey)};
   Pebble.openURL(CONFIG_URL + '#state=' + encodeURIComponent(JSON.stringify(state)));
-});
+}
+module.exports.configure = configure;
 
 Pebble.addEventListener('webviewclosed', function(event) {
   if (!event.response || event.response === 'CANCELLED') { return; }
   try {
     var config = JSON.parse(decodeURIComponent(event.response));
     var flights = cleanFlights(config.flights);
-    if (!flights.length) {
+    if (!nativeUI && !flights.length) {
       sendError('Add at least one flight in phone settings');
       return;
     }

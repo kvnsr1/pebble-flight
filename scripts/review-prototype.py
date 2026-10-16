@@ -15,6 +15,8 @@ from PIL import Image, ImageChops, ImageDraw
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs/screenshots"
 TEMP = ROOT / "build/review"
+if "#define PEBBLE_MOCK_DATA 1" not in (ROOT / "src/c/prototype_config.h").read_text():
+    raise SystemExit("Enable PEBBLE_MOCK_DATA=1 and rebuild before running the mock review.")
 OUT.mkdir(parents=True, exist_ok=True)
 TEMP.mkdir(parents=True, exist_ok=True)
 checks = []

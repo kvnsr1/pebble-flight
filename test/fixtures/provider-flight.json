@@ -1,0 +1,9 @@
+{
+  "ident_iata":"BA284", "fa_flight_id":"synthetic-test-flight", "registration":"G-DEMO", "aircraft_type":"B789",
+  "origin":{"code_iata":"SFO","name":"San Francisco International Airport","timezone":"America/Los_Angeles"},
+  "destination":{"code_iata":"LHR","name":"London Heathrow Airport","timezone":"Europe/London"},
+  "scheduled_out":"2026-10-16T23:35:00Z", "actual_out":"2026-10-16T23:47:00Z", "actual_off":"2026-10-17T00:00:00Z",
+  "scheduled_in":"2026-10-17T10:10:00Z", "estimated_in":"2026-10-17T09:58:00Z", "estimated_on":"2026-10-17T09:40:00Z",
+  "terminal_origin":"I", "gate_origin":"A6", "terminal_destination":"5", "gate_destination":null,
+  "baggage_claim":null, "progress_percent":62, "status":"En Route", "cancelled":false, "diverted":false
+}

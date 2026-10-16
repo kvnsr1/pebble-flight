@@ -37,15 +37,14 @@ var context = {
     this.send = function() {};
   },
   require: function(path) {
-    assert.strictEqual(path, './flight');
-    return require('../src/pkjs/flight');
+    return require('../src/pkjs/' + path.replace('./', ''));
   }
 };
 context.module = {exports: {}};
 
 vm.runInNewContext(fs.readFileSync('src/pkjs/live.js', 'utf8'), context);
 
-handlers.showConfiguration();
+context.module.exports.configure();
 var configState = JSON.parse(decodeURIComponent(openedUrl.split('#state=')[1]));
 assert.strictEqual(configState.flights[0].flightNumber, 'AA100');
 assert.strictEqual(configState.flights[0].bookingCode, 'ABC123');

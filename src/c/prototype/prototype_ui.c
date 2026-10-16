@@ -4,10 +4,42 @@
 #include "flight_model.h"
 #include "navigation.h"
 #include "pebble_plane.h"
+#include "live_data.h"
 
 static Window *s_window;
 static Layer *s_canvas;
 static PrototypeNavigation s_nav = { .page = PAGE_LIST };
+#if !PEBBLE_MOCK_DATA
+static Window *s_actions_window;
+static MenuLayer *s_actions_menu;
+static bool s_aircraft;
+static char s_selected_key[LIVE_TEXT_SIZE];
+#endif
+static size_t data_count(void) {
+#if PEBBLE_MOCK_DATA
+  return mock_flight_count();
+#else
+  return live_flight_count();
+#endif
+}
+static const Flight *data_at(size_t index) {
+#if PEBBLE_MOCK_DATA
+  return mock_flight_at(index);
+#else
+  return live_flight_at(index);
+#endif
+}
+static const char *source_label(void) {
+#if PEBBLE_MOCK_DATA
+  return "MOCK";
+#else
+  const NativeFlight *m=live_metadata_at(s_nav.selected);
+  if (!connection_service_peek_pebble_app_connection()) { return "OFFLINE"; }
+  if (live_global_error()[0]) { return "SAVED"; }
+  if (m && m->loading) { return "WAIT"; }
+  return m && !m->stale ? "LIVE" : "SAVED";
+#endif
+}
 
 // Every color is from Pebble's 64-color palette. No gradients or phone UI.
 static GColor background(void) { return GColorDarkGreen; }
@@ -27,7 +59,7 @@ static void fill(GContext *ctx, GRect rect, GColor color) {
   graphics_fill_rect(ctx, rect, 0, GCornerNone);
 }
 static GColor status_color(const Flight *flight) {
-  if (flight->status == FLIGHT_CANCELED) { return GColorWhite; }
+  if (flight->status == FLIGHT_CANCELED || flight->status == FLIGHT_UNKNOWN || flight->status == FLIGHT_DIVERTED) { return GColorWhite; }
   if (flight->status == FLIGHT_DELAYED) { return GColorYellow; }
   return accent();
 }
@@ -42,7 +74,7 @@ static const char *status_text(const Flight *flight, char *buffer, size_t size) 
 static void status_icon(GContext *ctx, FlightStatus status, GPoint p, GColor color) {
   graphics_context_set_stroke_color(ctx, color);
   graphics_context_set_stroke_width(ctx, 2);
-  if (status == FLIGHT_CANCELED) {
+  if (status == FLIGHT_CANCELED || status == FLIGHT_DIVERTED) {
     graphics_draw_line(ctx, GPoint(p.x-4,p.y-4), GPoint(p.x+4,p.y+4));
     graphics_draw_line(ctx, GPoint(p.x+4,p.y-4), GPoint(p.x-4,p.y+4));
   } else if (status == FLIGHT_LANDED) {
@@ -80,19 +112,43 @@ static void draw_list(GContext *ctx) {
   text(ctx, "All flights",10,0,148,32,FONT_KEY_GOTHIC_28_BOLD,GColorWhite,GTextAlignmentLeft);
   char count[16];
   snprintf(count,sizeof(count),"%d / %d",s_nav.empty?0:(int)s_nav.selected+1,
-           s_nav.empty?0:(int)mock_flight_count());
+           s_nav.empty?0:(int)data_count());
   text(ctx,count,151,10,39,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentRight);
-  text(ctx,"MOCK  /  OCT 2026",10,30,178,18,FONT_KEY_GOTHIC_14,accent(),GTextAlignmentLeft);
+  text(ctx,
+#if PEBBLE_MOCK_DATA
+       "MOCK  /  OCT 2026",
+#else
+       "YOUR FLIGHTS",
+#endif
+       10,30,178,18,FONT_KEY_GOTHIC_14,accent(),GTextAlignmentLeft);
   if (s_nav.empty) {
     pebble_plane_draw(ctx,GPoint(98,84));
-    text(ctx,"No flights yet",10,111,180,32,FONT_KEY_GOTHIC_24_BOLD,GColorWhite,GTextAlignmentCenter);
-    text(ctx,"Your logged flights\nwill appear here.",10,147,180,40,FONT_KEY_GOTHIC_18,GColorWhite,GTextAlignmentCenter);
-    text(ctx,"Hold SELECT: restore demo",5,209,190,18,FONT_KEY_GOTHIC_14,accent(),GTextAlignmentCenter);
+    text(ctx,
+#if PEBBLE_MOCK_DATA
+         "No flights yet",
+#else
+         connection_service_peek_pebble_app_connection()?"No flights yet":"Phone offline",
+#endif
+         10,111,180,32,FONT_KEY_GOTHIC_24_BOLD,GColorWhite,GTextAlignmentCenter);
+    text(ctx,
+#if PEBBLE_MOCK_DATA
+         "Your logged flights\nwill appear here.",
+#else
+         connection_service_peek_pebble_app_connection()?"Add flights in your\nPebble phone settings.":"Reconnect to show\nyour saved flights.",
+#endif
+         10,147,180,40,FONT_KEY_GOTHIC_18,GColorWhite,GTextAlignmentCenter);
+    text(ctx,
+#if PEBBLE_MOCK_DATA
+         "Hold SELECT: restore demo",
+#else
+         live_global_error(),
+#endif
+         5,209,190,18,FONT_KEY_GOTHIC_14,accent(),GTextAlignmentCenter);
     return;
   }
   for (size_t row=0; row<VISIBLE_FLIGHTS; row++) {
     size_t index=s_nav.top+row;
-    const Flight *flight=mock_flight_at(index);
+    const Flight *flight=data_at(index);
     if (!flight) { break; }
     int y=51+(int)row*51;
     bool selected=index==s_nav.selected;
@@ -116,11 +172,21 @@ static void draw_list(GContext *ctx) {
       graphics_draw_line(ctx,GPoint(183,y+26),GPoint(179,y+30));
     }
   }
-  fill(ctx,GRect(195,52,2,150),GColorDarkGray);
-  int thumb_h=150*VISIBLE_FLIGHTS/(int)mock_flight_count();
-  int thumb_y=52+(150-thumb_h)*(int)s_nav.top/((int)mock_flight_count()-VISIBLE_FLIGHTS);
-  fill(ctx,GRect(194,thumb_y,4,thumb_h),GColorWhite);
-  text(ctx,"Hold SELECT: empty demo",5,209,190,18,FONT_KEY_GOTHIC_14,GColorLightGray,GTextAlignmentCenter);
+  if (data_count()>VISIBLE_FLIGHTS) {
+    fill(ctx,GRect(195,52,2,150),GColorDarkGray);
+    int thumb_h=150*VISIBLE_FLIGHTS/(int)data_count();
+    int thumb_y=52+(150-thumb_h)*(int)s_nav.top/((int)data_count()-VISIBLE_FLIGHTS);
+    fill(ctx,GRect(194,thumb_y,4,thumb_h),GColorWhite);
+  }
+  const char *footer="Hold SELECT: empty demo";
+#if !PEBBLE_MOCK_DATA
+  const NativeFlight *metadata=live_metadata_at(s_nav.selected);
+  footer=!connection_service_peek_pebble_app_connection()?"Offline / saved data":
+    live_global_error()[0]?"Phone unavailable / saved data":
+    metadata && metadata->loading?"Updating flight...":
+    metadata && metadata->text[TX_ERROR][0]?"Saved data / SELECT for details":"Hold SELECT: actions";
+#endif
+  text(ctx,footer,5,209,190,18,FONT_KEY_GOTHIC_14,GColorLightGray,GTextAlignmentCenter);
 }
 static const char *overview_time(const FlightTime *time) {
   return time->kind==TIME_ACTUAL || time->kind==TIME_ESTIMATED ? time->current : time->scheduled;
@@ -132,7 +198,7 @@ static const char *time_heading(const FlightTime *time, bool departure) {
 }
 static void draw_overview(GContext *ctx, const Flight *flight) {
   label(ctx,"OVERVIEW",10,1,120);
-  text(ctx,"MOCK",145,1,40,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentRight);
+  text(ctx,source_label(),145,1,40,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentRight);
   GRect ring=GRect(49,29,98,98);
   int start=DEG_TO_TRIGANGLE(225);
   int sweep=DEG_TO_TRIGANGLE(270);
@@ -153,8 +219,9 @@ static void draw_overview(GContext *ctx, const Flight *flight) {
     text(ctx,percent,56,49,84,38,progress==100?FONT_KEY_GOTHIC_28_BOLD:FONT_KEY_BITHAM_30_BLACK,
          GColorWhite,GTextAlignmentCenter);
   } else {
-    status_icon(ctx,FLIGHT_CANCELED,GPoint(98,68),GColorWhite);
-    text(ctx,"NO JOURNEY",56,75,84,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentCenter);
+    if (progress==-1) { status_icon(ctx,FLIGHT_CANCELED,GPoint(98,68),GColorWhite); }
+    text(ctx,progress==-1?"NO JOURNEY":"PROGRESS",56,progress==-1?75:59,84,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentCenter);
+    if (progress==-2) { text(ctx,"UNKNOWN",56,74,84,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentCenter); }
   }
   text(ctx,flight->number,51,89,94,25,FONT_KEY_GOTHIC_18_BOLD,GColorWhite,GTextAlignmentCenter);
   status_icon(ctx,flight->status,GPoint(23,136),status_color(flight));
@@ -180,20 +247,37 @@ static void draw_airport(GContext *ctx, const Flight *flight, bool departure) {
   label(ctx,heading,10,1,178);
   text(ctx,airport->code,9,17,178,50,FONT_KEY_BITHAM_42_BOLD,GColorWhite,GTextAlignmentLeft);
   text(ctx,airport->name,10,65,177,34,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentLeft);
-  label(ctx,"SCHEDULED",10,103,94);
+  bool date_change=time->scheduled_date && time->scheduled_date[0] &&
+    strcmp(time->scheduled_date,"Unknown") && strcmp(time->scheduled_date,time->date);
+  bool zone_change=time->scheduled_zone && time->scheduled_zone[0];
+  char schedule_label[40];
+  snprintf(schedule_label,sizeof(schedule_label),date_change?"SCHED %s":"SCHEDULED",time->scheduled_date);
+  if (zone_change) { snprintf(schedule_label,sizeof(schedule_label),"SCHED %s",time->scheduled_zone); }
+  label(ctx,schedule_label,10,103,94);
   text(ctx,time->scheduled,109,96,78,30,FONT_KEY_GOTHIC_24_BOLD,GColorWhite,GTextAlignmentRight);
   const char *kind=time->kind==TIME_ACTUAL?"ACTUAL":time->kind==TIME_ESTIMATED?"ESTIMATED":
                    time->kind==TIME_UNKNOWN?"NOT REPORTED":"UNAVAILABLE";
   const char *value=time->kind==TIME_UNKNOWN?"Unknown":time->kind==TIME_UNAVAILABLE?"N/A":time->current;
-  label(ctx,kind,10,130,94);
+  char current_label[32];
+  snprintf(current_label,sizeof(current_label),date_change?"%s %s":"%s",
+           date_change?(time->kind==TIME_ACTUAL?"ACT":"EST"):kind,time->date);
+  if (zone_change) { snprintf(current_label,sizeof(current_label),"%s %s",time->kind==TIME_ACTUAL?"ACT":"EST",time->zone); }
+  label(ctx,current_label,10,130,94);
   text(ctx,value,106,123,81,30,strlen(value)>5?FONT_KEY_GOTHIC_18_BOLD:FONT_KEY_GOTHIC_24_BOLD,
        accent(),GTextAlignmentRight);
   int offset=time->utc_offset_minutes;
   char zone[48];
   snprintf(zone,sizeof(zone),"%s / %s / UTC%c%d",time->date,time->zone,offset<0?'-':'+',abs(offset)/60);
-  if (abs(offset)%60) {
+  if (offset==2000) { snprintf(zone,sizeof(zone),"%s / Timezone unknown",time->date); }
+  else if (abs(offset)%60) {
     size_t len=strlen(zone);
     snprintf(zone+len,sizeof(zone)-len,":%02d",abs(offset)%60);
+  }
+  if (zone_change && date_change) {
+    char utc[16];
+    snprintf(utc,sizeof(utc),"UTC%c%d",offset<0?'-':'+',abs(offset)/60);
+    if (abs(offset)%60) { size_t n=strlen(utc); snprintf(utc+n,sizeof(utc)-n,":%02d",abs(offset)%60); }
+    snprintf(zone,sizeof(zone),"%s>%s %s",time->scheduled_date,time->date,utc);
   }
   text(ctx,zone,10,153,178,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentLeft);
   char delay[40];
@@ -285,20 +369,56 @@ static void draw_booking(GContext *ctx, const Flight *flight) {
        accent(),GTextAlignmentLeft);
   text(ctx,booking_position_label(booking),10,181,177,25,FONT_KEY_GOTHIC_18_BOLD,
        GColorWhite,GTextAlignmentLeft);
-  text(ctx,"MOCK / sample booking",10,210,177,18,FONT_KEY_GOTHIC_14,
+  text(ctx,
+#if PEBBLE_MOCK_DATA
+       "MOCK / sample booking",
+#else
+       "Private / saved on phone",
+#endif
+       10,210,177,18,FONT_KEY_GOTHIC_14,
        accent(),GTextAlignmentLeft);
 }
 static void draw_note(GContext *ctx, const Flight *flight) {
   label(ctx,"ABOUT THIS FLIGHT",10,3,178);
   text(ctx,flight->number,10,23,176,32,FONT_KEY_GOTHIC_28_BOLD,GColorWhite,GTextAlignmentLeft);
+#if PEBBLE_MOCK_DATA
   text(ctx,"MOCK / fixed example\n24h airport-local times\nUTC offsets include DST\nUnknown = not reported\nN/A = unavailable",10,64,177,112,FONT_KEY_GOTHIC_18,GColorWhite,GTextAlignmentLeft);
+#else
+  const NativeFlight *m=live_metadata_at(s_nav.selected);
+  char information[512];
+  const char *error=m && m->text[TX_ERROR][0]?m->text[TX_ERROR]:live_global_error();
+  snprintf(information,sizeof(information),"%s / 24h airport-local\nUpdated %s\nNext auto %s\n%s\nUnknown = not reported\nN/A = unavailable",source_label(),
+    m?m->text[TX_UPDATED]:"Never",m?m->text[TX_NEXT_REFRESH]:"--",
+    error[0]?error:"Times include local dates and DST.");
+  text(ctx,information,10,60,177,120,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentLeft);
+#endif
   text(ctx,"SELECT: close note\nBACK: all flights",10,184,177,41,FONT_KEY_GOTHIC_14_BOLD,accent(),GTextAlignmentLeft);
 }
+#if !PEBBLE_MOCK_DATA
+static void draw_aircraft(GContext *ctx,const Flight *flight) {
+  const NativeFlight *m=live_metadata_at(s_nav.selected);
+  if (!m) { return; }
+  label(ctx,"AIRCRAFT",10,1,178);
+  text(ctx,m->text[TX_AIRCRAFT_MODEL],10,24,177,53,FONT_KEY_GOTHIC_24_BOLD,GColorWhite,GTextAlignmentLeft);
+  text(ctx,m->text[TX_AIRCRAFT_NUMBER],10,76,177,28,FONT_KEY_GOTHIC_24_BOLD,accent(),GTextAlignmentLeft);
+  label(ctx,"FIRST FLIGHT",10,108,90);
+  text(ctx,m->text[TX_AIRCRAFT_FIRST],101,108,87,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentRight);
+  label(ctx,"INCOMING LEGS",10,133,178);
+  text(ctx,m->text[TX_LEG2],10,150,92,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentLeft);
+  text(ctx,m->text[TX_LEG2_STATUS],104,150,84,18,FONT_KEY_GOTHIC_14,accent(),GTextAlignmentRight);
+  text(ctx,m->text[TX_LEG1],10,174,92,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentLeft);
+  text(ctx,m->text[TX_LEG1_STATUS],104,174,84,18,FONT_KEY_GOTHIC_14,accent(),GTextAlignmentRight);
+  text(ctx,"BACK: flight details",10,210,177,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentLeft);
+}
+#endif
 static void canvas_update(Layer *layer, GContext *ctx) {
   fill(ctx,layer_get_bounds(layer),background());
   if (s_nav.page==PAGE_LIST) { draw_list(ctx); return; }
-  const Flight *flight=mock_flight_at(s_nav.selected);
+  const Flight *flight=data_at(s_nav.selected);
   if (!flight) { return; }
+#if !PEBBLE_MOCK_DATA
+  if (s_aircraft) { draw_aircraft(ctx,flight); return; }
+#endif
   if (s_nav.note) { draw_note(ctx,flight); }
   else if (s_nav.page==PAGE_OVERVIEW) { draw_overview(ctx,flight); }
   else if (s_nav.page==PAGE_BOOKING) { draw_booking(ctx,flight); }
@@ -308,16 +428,91 @@ static void canvas_update(Layer *layer, GContext *ctx) {
 static void changed(void) {
   APP_LOG(APP_LOG_LEVEL_INFO,"UI page=%d selected=%d top=%d empty=%d note=%d",
           s_nav.page,(int)s_nav.selected,(int)s_nav.top,s_nav.empty,s_nav.note);
-  layer_mark_dirty(s_canvas);
+#if !PEBBLE_MOCK_DATA
+  const NativeFlight *metadata=live_metadata_at(s_nav.selected);
+  if (metadata) { snprintf(s_selected_key,sizeof(s_selected_key),"%s",metadata->text[TX_KEY]); }
+#endif
+  if (s_canvas) { layer_mark_dirty(s_canvas); }
 }
-static void up(ClickRecognizerRef r, void *c) { navigation_move(&s_nav,-1,mock_flight_count()); changed(); }
-static void down(ClickRecognizerRef r, void *c) { navigation_move(&s_nav,1,mock_flight_count()); changed(); }
-static void select_click(ClickRecognizerRef r, void *c) { navigation_select(&s_nav,mock_flight_count()); changed(); }
-static void long_select(ClickRecognizerRef r, void *c) { navigation_toggle_empty(&s_nav); changed(); }
+static void up(ClickRecognizerRef r, void *c) {
+#if !PEBBLE_MOCK_DATA
+  if (s_aircraft) { return; }
+#endif
+  navigation_move(&s_nav,-1,data_count()); changed(); }
+static void down(ClickRecognizerRef r, void *c) {
+#if !PEBBLE_MOCK_DATA
+  if (s_aircraft) { return; }
+#endif
+  navigation_move(&s_nav,1,data_count()); changed(); }
+static void select_click(ClickRecognizerRef r, void *c) {
+#if !PEBBLE_MOCK_DATA
+  if (s_aircraft) { s_aircraft=false; changed(); return; }
+  bool opening=s_nav.page==PAGE_LIST && data_count();
+#endif
+  navigation_select(&s_nav,data_count()); changed();
+#if !PEBBLE_MOCK_DATA
+  if (opening) { live_select_flight(s_nav.selected,false); }
+#endif
+}
+static void long_select(ClickRecognizerRef r, void *c) {
+#if PEBBLE_MOCK_DATA
+  navigation_toggle_empty(&s_nav); changed();
+#else
+  if (data_count()) { window_stack_push(s_actions_window,true); }
+#endif
+}
 static void back(ClickRecognizerRef r, void *c) {
+#if !PEBBLE_MOCK_DATA
+  if (s_aircraft) { s_aircraft=false; changed(); return; }
+#endif
   if (navigation_back(&s_nav)) { window_stack_pop(true); }
   else { changed(); }
 }
+#if !PEBBLE_MOCK_DATA
+static uint16_t action_rows(MenuLayer *menu,uint16_t section,void *context) { return 3; }
+static void action_draw(GContext *ctx,const Layer *layer,MenuIndex *index,void *context) {
+  const char *names[]={"Refresh flight","Aircraft details","Close"};
+  menu_cell_basic_draw(ctx,layer,names[index->row],NULL,NULL);
+}
+static void action_select(MenuLayer *menu,MenuIndex *index,void *context) {
+  int action=index->row;
+  window_stack_pop(true);
+  if (!data_count()) { return; }
+  if (action==0) { live_select_flight(s_nav.selected,true); }
+  else if (action==1) {
+    if (s_nav.page==PAGE_LIST) { navigation_select(&s_nav,data_count()); }
+    s_aircraft=true; s_nav.note=false; live_aircraft(s_nav.selected); changed();
+  }
+}
+static void actions_load(Window *window) {
+  Layer *root=window_get_root_layer(window);
+  s_actions_menu=menu_layer_create(layer_get_bounds(root));
+  menu_layer_set_normal_colors(s_actions_menu,background(),GColorWhite);
+  menu_layer_set_highlight_colors(s_actions_menu,accent(),background());
+  menu_layer_set_callbacks(s_actions_menu,NULL,(MenuLayerCallbacks){
+    .get_num_rows=action_rows,.draw_row=action_draw,.select_click=action_select});
+  menu_layer_set_click_config_onto_window(s_actions_menu,window);
+  layer_add_child(root,menu_layer_get_layer(s_actions_menu));
+}
+static void actions_unload(Window *window) { menu_layer_destroy(s_actions_menu); s_actions_menu=NULL; }
+static void data_changed(void) {
+  size_t count=data_count();
+  s_nav.empty=count==0;
+  bool found=false;
+  for (size_t i=0;i<count;i++) {
+    if (!strcmp(live_metadata_at(i)->text[TX_KEY],s_selected_key)) { s_nav.selected=i; found=true; break; }
+  }
+  if (!found && s_selected_key[0]) { s_nav.page=PAGE_LIST; s_nav.note=false; s_aircraft=false; }
+  if (!count) { s_nav.selected=0; s_nav.top=0; s_nav.page=PAGE_LIST; s_nav.note=false; s_aircraft=false; }
+  else {
+    if (s_nav.selected>=count) { s_nav.selected=count-1; }
+    size_t max_top=count>VISIBLE_FLIGHTS?count-VISIBLE_FLIGHTS:0;
+    if (s_nav.top>max_top) { s_nav.top=max_top; }
+    if (s_nav.selected<s_nav.top) { s_nav.top=s_nav.selected; }
+  }
+  changed();
+}
+#endif
 static void click_config(void *context) {
   window_single_repeating_click_subscribe(BUTTON_ID_UP,180,up);
   window_single_repeating_click_subscribe(BUTTON_ID_DOWN,180,down);
@@ -339,8 +534,17 @@ int main(void) {
   window_set_click_config_provider(s_window,click_config);
   window_set_window_handlers(s_window,(WindowHandlers){.load=window_load,.unload=window_unload});
   window_stack_push(s_window,true);
-  // Deliberately no AppMessage, phone dependency, timers, or persistent writes.
+#if !PEBBLE_MOCK_DATA
+  s_actions_window=window_create();
+  window_set_window_handlers(s_actions_window,(WindowHandlers){.load=actions_load,.unload=actions_unload});
+  s_nav.empty=true;
+  live_data_init(data_changed);
+#endif
   app_event_loop();
+#if !PEBBLE_MOCK_DATA
+  live_data_deinit();
+  window_destroy(s_actions_window);
+#endif
   window_destroy(s_window);
   pebble_plane_deinit();
 }

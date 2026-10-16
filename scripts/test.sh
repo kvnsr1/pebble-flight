@@ -9,7 +9,11 @@ node test/multiflight.test.js
 node test/prototype_mode.test.js
 TEST_BINARY=$(mktemp "${TMPDIR:-/tmp}/pebble-prototype-test.XXXXXX")
 trap 'rm -f "$TEST_BINARY"' EXIT HUP INT TERM
-cc -std=c99 -Wall -Wextra -Werror test/prototype.test.c \
+cc -DPEBBLE_MOCK_DATA=1 -std=c99 -Wall -Wextra -Werror test/prototype.test.c \
   src/c/prototype/navigation.c src/c/prototype/mock_flights.c \
-  src/c/prototype/booking.c -o "$TEST_BINARY"
+  src/c/prototype/booking.c src/c/prototype/flight_model.c -o "$TEST_BINARY"
+"$TEST_BINARY"
+node test/native-view.test.js
+cc -std=c99 -Wall -Wextra -Werror test/live_store.test.c \
+  src/c/prototype/live_store.c -o "$TEST_BINARY"
 "$TEST_BINARY"

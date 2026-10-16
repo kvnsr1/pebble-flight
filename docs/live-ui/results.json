@@ -1,0 +1,14 @@
+{
+  "mode": "live native app with synthetic AppMessage inputs",
+  "platform": "emery",
+  "passed_comparisons": [
+    "Up stops at Overview",
+    "Down stops at Booking",
+    "Booking note closes",
+    "Up returns to Arrival",
+    "Back restores live selection",
+    "List stops at third saved flight",
+    "Back retains third-flight selection"
+  ],
+  "provider_requests": 0
+}

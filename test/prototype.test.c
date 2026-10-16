@@ -21,6 +21,11 @@ int main(void) {
   }
   for (int i=0; i<6; i++) { assert(seen[i]); }
   assert(flight_progress(mock_flight_at(2)) == 62);
+  Flight missing_progress=*mock_flight_at(2);
+  missing_progress.progress_percent=-1;
+  assert(flight_progress(&missing_progress)==-2);
+  missing_progress.status=FLIGHT_DIVERTED;
+  assert(flight_progress(&missing_progress)==-2);
   assert(mock_flight_at(2)->arrival.time.delay_minutes == -12);
   assert(mock_flight_at(4)->departure.time.delay_minutes == 75);
   assert(strcmp(mock_flight_at(0)->departure.time.date, mock_flight_at(0)->arrival.time.date) != 0);

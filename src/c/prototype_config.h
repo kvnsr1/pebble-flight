@@ -1,5 +1,10 @@
 #pragma once
 
-// CloudPebble needs no credentials or generated files. Set to 0 to build the
-// original live app. The phone runtime is gated by a native-mode handshake.
-#define PEBBLE_UI_PROTOTYPE 1
+// Approved UI is the default in both modes. CloudPebble may edit these values.
+#ifndef PEBBLE_MOCK_DATA
+#define PEBBLE_MOCK_DATA 0
+#endif
+#ifndef PEBBLE_USE_LEGACY_UI
+#define PEBBLE_USE_LEGACY_UI 0
+#endif
+#define PEBBLE_UI_PROTOTYPE (!PEBBLE_USE_LEGACY_UI)

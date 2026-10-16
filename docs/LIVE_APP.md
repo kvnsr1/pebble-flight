@@ -1,3 +1,7 @@
+> Archived instructions for the legacy five-page interface. The current app uses
+> the approved four-page design; see the repository README. These controls apply
+> only when `PEBBLE_USE_LEGACY_UI=1`.
+
 # Pebble Flight
 
 A Pebble Time 2 flight-status app inspired by the glanceable parts of Flighty. It shows route, date, local departure/arrival times, delay severity, and departure/arrival terminal and gate.

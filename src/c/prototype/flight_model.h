@@ -15,6 +15,8 @@ typedef struct {
   TimeKind kind;
   bool delay_known;
   int delay_minutes;       // Signed: negative is early, positive is late.
+  const char *scheduled_date; // Only needed when schedule and current date differ.
+  const char *scheduled_zone; // Explicit schedule zone when DST/offset changes.
 } FlightTime;
 typedef struct {
   const char *code;
@@ -25,7 +27,8 @@ typedef struct {
 } FlightAirport;
 typedef enum {
   FLIGHT_UPCOMING, FLIGHT_BOARDING, FLIGHT_IN_FLIGHT,
-  FLIGHT_LANDED, FLIGHT_DELAYED, FLIGHT_CANCELED
+  FLIGHT_LANDED, FLIGHT_DELAYED, FLIGHT_CANCELED,
+  FLIGHT_DIVERTED, FLIGHT_DEPARTED, FLIGHT_UNKNOWN
 } FlightStatus;
 typedef enum { SEAT_UNKNOWN, SEAT_WINDOW, SEAT_MIDDLE, SEAT_AISLE } SeatPosition;
 typedef struct {
@@ -42,6 +45,7 @@ typedef struct {
   FlightAirport departure;
   FlightAirport arrival;
   FlightBooking booking;
+  bool timezone_unknown;
 } Flight;
 
 const Flight *mock_flight_at(size_t index);
