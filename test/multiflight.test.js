@@ -41,8 +41,9 @@ var context = {
     return require('../src/pkjs/flight');
   }
 };
+context.module = {exports: {}};
 
-vm.runInNewContext(fs.readFileSync('src/pkjs/index.js', 'utf8'), context);
+vm.runInNewContext(fs.readFileSync('src/pkjs/live.js', 'utf8'), context);
 
 handlers.showConfiguration();
 var configState = JSON.parse(decodeURIComponent(openedUrl.split('#state=')[1]));

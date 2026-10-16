@@ -1,99 +1,167 @@
-# Pebble Flight
+# Pebble Flight — native UI prototype
 
-A Pebble Time 2 flight-status app inspired by the glanceable parts of Flighty. It shows route, date, local departure/arrival times, delay severity, and departure/arrival terminal and gate.
+Interactive **Pebble C SDK** app for **Pebble Time 2 / emery (200×228)**.
+Branch: **`codex/native-flight-ui-prototype`**. Launcher name: **Flight Preview**.
+Mock mode is enabled by default. No credentials, phone configuration or flight
+service is needed. All examples are synthetic and frozen in October 2026.
 
-## Architecture
+The design adapts the supplied reference's green palette, circular progress,
+large airport codes and page dots to Pebble system fonts, 64 colors, native
+graphics and physical buttons.
 
-- The native C watch app targets `emery` (Pebble Time 2).
-- PebbleKit JS runs in the Pebble phone app, calls FlightAware AeroAPI, caches the last successful response, and sends a compact message to the watch.
-- The settings page stores up to three flights, optional booking/seat details, and one AeroAPI key.
+## Import, build and run in CloudPebble
 
-The watch itself does not have internet access, so the connected phone is required for fresh data. Gate and terminal values are shown as `--` when an airline/airport has not published them.
+1. Sign in at [CloudPebble](https://cloudpebble.repebble.com/).
+2. In the project list choose **Import → Import from GitHub**.
+3. Repository: `https://github.com/kvnsr1/pebble-flight`.
+   Branch: **`codex/native-flight-ui-prototype`**. Enter this branch explicitly.
+4. Use **Pebble C SDK / native**, **SDK 3** metadata, target **emery / Pebble
+   Time 2** only. Keep the imported UUID and message keys. CloudPebble's default
+   new-project type may be JavaScript SDK (Alloy); this project uses native C.
+5. Open **Build & Run**, compile, select **Run On → Emulator → emery**, then
+   run/install the successful build. Both browser and cloud emulators support
+   this credential-free prototype.
+6. Use the emulator's physical buttons as below. Do not use Publish.
 
-## Mac setup
+[Open the GitHub import dialog](https://cloudpebble.repebble.com/ide/import/github/kvnsr1/pebble-flight)
+(set its branch field as above). Upload Zip also accepts a standard project ZIP
+containing `package.json`, `wscript`, `src/` and `resources/`.
 
-This project is already set up at `~/Developer/pebble-flight` with private copies of Python 3.13, Node, and the Pebble command-line tool under `.tools/`. To build it without changing your Mac's system configuration:
+## Buttons
+
+| Screen | Up / Down | Select | Hold Select (0.7s) | Back |
+|---|---|---|---|---|
+| All Flights | Move selection and scroll; stop at list ends | Open Overview | Toggle empty/filled demo, retaining position | Exit |
+| Detail pages | Overview ↔ Departure ↔ Arrival; stop at ends | Toggle data/timezone note | No action | Return directly to All Flights, retaining selection and scroll |
+| Data note | Close note and move one detail page, respecting limits | Close note | No action | Return directly to All Flights |
+| Empty list | No action | No action | Restore six examples | Exit |
+
+The three right-hand dots show Overview, Departure, Arrival; the active dot is
+larger and white. Tiny arrows indicate available detail pages. Native emulator
+keyboard mappings: Up=`W`/↑, Down=`X`/↓, Select=`S`/→, Back=`Q`/←. CloudPebble
+also provides visible watch buttons; keyboard focus must be on the emulator.
+
+## Inspect the mock scenarios
+
+All six examples appear in All Flights. Press Down to select, Select to open,
+Down twice for the airports, Back to return. No rebuild is required. Each is an
+independent frozen example rather than a live shared clock.
+
+| Row | Flight / route | Scenario and edge cases |
+|---|---|---|
+| 1 | AA100 / JFK → LHR | Upcoming; estimates not reported, unknown gate, unavailable baggage; next-day arrival; EDT → BST |
+| 2 | UA206 / SFO → ORD | Boarding; on-time estimates; gate F12, baggage unknown; PDT → CDT |
+| 3 | BA284 / SFO → LHR | In flight, fixed 62%; actual departure 12m late, estimated arrival 12m early; next day |
+| 4 | DL418 / LAX → JFK | Landed, 100%; actual departure 5m early, actual arrival 18m late; baggage B7 |
+| 5 | AF83 / SFO → CDG | Delayed 75m; unknown gate, unavailable baggage; long airport name; next-day CEST arrival |
+| 6 | EK202 / JFK → DXB | Canceled; schedules retained; current times, terminal, gate and baggage unavailable; EDT → GST |
+| Hold Select on list | Empty list | No selectable rows; hold again to restore the prior position |
+
+## Time, status and progress
+
+- **24-hour airport-local time** throughout. Each endpoint shows its own date
+  and timezone; airport detail pages include the UTC offset for that date,
+  including daylight saving time. Values never depend on the watch timezone.
+- Overview labels SCHED, EST or ACTUAL. Airport pages separate scheduled and
+  estimated/actual values, with numerical early/late status for that endpoint.
+- **Unknown** means not reported; **N/A** means unavailable or inapplicable.
+  Missing estimates stay Unknown on airport pages. Overview falls back to the
+  explicitly labeled schedule. Cancellation preserves schedules and shows N/A
+  for current times. No new estimate is invented.
+- The circular track sweeps 270° from lower left to lower right. Upcoming,
+  boarding and pre-departure delayed flights stay at 0%, with the plane at the
+  start. In-flight progress is explicit model data (62% here). Landed is 100%,
+  with the plane at the end. Canceled shows a muted track, X and NO JOURNEY,
+  with no plane or completed progress. The model clamps airborne values to 0–99.
+- Every status has text and a clock, direction arrow, checkmark or X. Color
+  reinforces the label. Percentages remain fixed during review and are never
+  calculated from timezone-formatted strings.
+
+## Existing architecture and isolation
+
+The original project uses `projectType: native`, `sdkVersion: "3"`,
+`enableMultiJS: true`, and `targetPlatforms: ["emery"]`. These settings and the
+recursive native C/PebbleKit JS `wscript` build remain. Validation used SDK
+**4.33.1**; SDK 3 metadata denotes the native app API generation, not the
+installed toolchain version.
+
+| File | Responsibility |
+|---|---|
+| `src/c/prototype_config.h` | Single compile-time mock/live switch |
+| `src/c/prototype/flight_model.h` | Provider-neutral flight, airport, time and presence model |
+| `src/c/prototype/mock_flights.c` | Only fixture source; six deterministic examples |
+| `src/c/prototype/navigation.*` | Selection, scroll position, bounded detail navigation |
+| `src/c/prototype/prototype_ui.c` | Native Layer/GContext rendering and button handlers |
+| `src/c/prototype/pebble_plane.c` | PebbleOS 25px flight icon translated into GPaths |
+| `src/c/main.c` | Original five-page live app behind the mode switch |
+| `src/pkjs/live.js` | Original phone service, moved from index.js; refresh/cache/settings/aircraft/booking retained |
+| `src/pkjs/index.js` | Loads the phone service only after a native LIVE_MODE handshake |
+
+`#define PEBBLE_UI_PROTOTYPE 1` is checked in. It runs entirely on the watch,
+without AppMessage, timers, persistent writes, credentials or services. The
+phone entry point sends only a mode query; it does not load the production
+module or access storage without a native live-mode reply. No second JS switch
+is required. Set the C switch to **0** and rebuild to use the original live app
+and controls; its instructions are preserved in [docs/LIVE_APP.md](docs/LIVE_APP.md).
+Mode 0 is the legacy integration fallback; the new UI still needs a production
+adapter after approval.
+
+This branch uses its own UUID `e4baf632-a764-46ec-8262-e90610be4a85` and display
+name. The published app's UUID `e6fc90f6-5f5a-4f34-a18e-76f13a5b2327` is retained
+only in documentation, so installing Flight Preview does not replace it.
+
+Repository inspection found no GitHub Actions or other checked-in deployment
+workflow. The existing scripts build locally and install in Emery. The existing
+phone settings site at `https://kvnsr1.github.io/pebble-flight/config/` is unchanged;
+no Pages deployment or appstore publication is part of this prototype.
+
+The original phone model carries one current time per endpoint, delay-severity
+status, terminal/gate, aircraft, booking and seat data for up to three saved
+flights. After design approval, add a production adapter to populate this UI's
+neutral model with airport names, separate scheduled/estimated/actual times,
+local dates/offsets, operational state, explicit progress and field presence.
+The old payload does not supply baggage, airport names or progress. Keep those
+Unknown/N/A until provided, keep fixtures separate, and retain existing
+refresh, cache and error behavior. The prototype list currently represents all
+six mock logs; the existing live service's three-flight limit is preserved.
+
+## Local build and tests
+
+With `pebble`, the SDK, Node and a C compiler installed:
 
 ```sh
-cd ~/Developer/pebble-flight
-./scripts/build.sh
+git switch codex/native-flight-ui-prototype
+pebble build
+pebble install --emulator emery
+sh scripts/test.sh
+python3 scripts/review-prototype.py
 ```
 
-The finished package is `build/pebble-flight.pbw`.
+The last command requires Pillow and reinstalls Flight Preview in the emulator,
+drives physical-button events, saves screenshots and compares framebuffers for
+navigation boundaries and selection/scroll restoration.
 
-To build and launch it in the Pebble Time 2 emulator:
+The Mac scripts also accept the existing private tool installation:
 
 ```sh
-./scripts/build.sh
-./scripts/emulator.sh
+export PEBBLE_TOOLS_DIR="$HOME/Developer/pebble-flight/.tools"
+sh scripts/build.sh
+sh scripts/emulator.sh
 ```
 
-For a fresh installation on another Mac, use the steps below.
+Output: `build/pebble-flight.pbw`. See [validation results](docs/VALIDATION.md) and
+[native screenshots](docs/screenshots/contact-sheet.png).
 
-1. Install Homebrew if needed, then install current Python and Node:
+## Documentation consulted
 
-   ```sh
-   brew install python@3.13 node uv
-   ```
+- [SDK](https://developer.repebble.com/sdk/)
+- [CloudPebble workflow](https://developer.repebble.com/sdk/cloud/)
+- [CLI and emulator](https://developer.repebble.com/guides/tools-and-resources/pebble-tool/)
+- [Hardware platforms](https://developer.repebble.com/guides/tools-and-resources/hardware-information/)
+- [Interaction patterns](https://developer.repebble.com/guides/design-and-interaction/recommended/)
+- [Drawing primitives](https://developer.repebble.com/docs/c/Graphics/Drawing_Primitives/)
+- [Pebble iconography](https://github.com/pebble-dev/iconography/tree/master)
+- [Icon style guide](https://github.com/pebble-dev/iconography/blob/master/STYLE-GUIDE.md)
 
-2. Install the current Pebble command-line tool and SDK:
-
-   ```sh
-   uv tool install pebble-tool --python 3.13
-   pebble sdk install latest
-   ```
-
-3. Build the app from this directory:
-
-   ```sh
-   pebble build
-   ```
-
-4. Run it in the Time 2 emulator:
-
-   ```sh
-   pebble install --emulator emery
-   ```
-
-   For a physical watch, enable **Dev Connect** in the Pebble mobile app, then use the install command shown by the app. The legacy local-network form is `pebble install --phone PHONE_IP`.
-
-## Connect live data
-
-1. Create a FlightAware AeroAPI v4 Personal account and API key.
-2. Publish the `config/` folder as a static HTTPS site (GitHub Pages works).
-3. Replace `CONFIG_URL` near the top of `src/pkjs/index.js` with that HTTPS URL.
-4. Rebuild and install the app.
-5. Open Pebble Flight's settings in the phone app, then enter up to three IATA/ICAO flight identifiers such as `AA100`, their departure dates, and the key. Booking code and seat number are optional per flight. Seats ending in A/F, B/E, or C/D automatically map to window, middle, or aisle; the detected position can be overridden. Each flight card also has a button to clear all of its details.
-
-For personal testing, the key is stored in the Pebble phone app's local storage and sent in AeroAPI's `x-apikey` header. It is never passed to the hosted settings page. Do not ship a public build this way: FlightAware does not support browser-side CORS requests and recommends a backend application server. Put AeroAPI behind a small serverless proxy so users cannot extract or abuse your key. FlightAware's current Personal terms are for personal/academic derivative use; a public consumer app requires the appropriate commercial tier.
-
-## Controls
-
-- **Up / Down:** move between Summary, Departure, Arrival, Aircraft, and Booking.
-- **Select:** refresh the visible flight.
-- **Long-press Select:** switch to the next saved flight.
-- **Back:** exit.
-
-While the app is open, a lightweight five-minute heartbeat checks whether the visible flight is due for an AeroAPI update. Flights more than seven days away do not auto-refresh. From one to seven days, only the next flight refreshes every six hours; flights refresh hourly in the final 24 hours, every 15 minutes in the final six hours, and every 10 minutes while airborne. Canceled and completed flights stop refreshing, and landed flights leave the list after one hour. Select still forces a manual refresh for non-terminal flights.
-
-Opening the Aircraft page requests and caches up to two prior legs for the assigned registration. This is lazy-loaded and costs at most one additional `/flights/{registration}` result set per tracked flight (currently $0.005). AeroAPI Personal does not expose an individual airframe's original first-flight date, so that field remains unavailable rather than displaying an inferred date.
-
-Booking and seat details remain in the Pebble phone app's local storage. They are passed to the HTTPS configuration page in the URL fragment, which is not sent to the GitHub Pages host.
-
-## Delay rules
-
-Before departure, severity is based on the latest gate-departure estimate versus schedule. Once the flight has departed, it switches to the latest arrival estimate versus schedule.
-
-- On time: no positive delay against the active schedule
-- Slight delay: 1–29 minutes
-- Delay: 30–60 minutes
-- Major delay: more than 60 minutes
-- Canceled/diverted flights override delay severity
-
-## Test data mapping
-
-If Node is installed, run:
-
-```sh
-node test/flight.test.js
-```
+The original PebbleOS SVG and Apache-2.0 license are retained in
+`resources/pebble-iconography/`, with the GPath translation noted in NOTICE.md.

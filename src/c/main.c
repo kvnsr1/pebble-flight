@@ -1,3 +1,5 @@
+#include "prototype_config.h"
+#if !PEBBLE_UI_PROTOTYPE
 #include <pebble.h>
 
 typedef struct {
@@ -475,6 +477,15 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 }
 
 static void inbox_received(DictionaryIterator *iter, void *context) {
+  // Only the legacy live binary authorizes loading the phone service module.
+  if (dict_find(iter, MESSAGE_KEY_REQUEST_MODE)) {
+    DictionaryIterator *out;
+    if (app_message_outbox_begin(&out) == APP_MSG_OK) {
+      dict_write_uint8(out, MESSAGE_KEY_LIVE_MODE, 1);
+      app_message_outbox_send();
+    }
+    return;
+  }
   copy_tuple(iter, MESSAGE_KEY_FLIGHT_NUMBER, s_flight.flight, sizeof(s_flight.flight));
   copy_tuple(iter, MESSAGE_KEY_FLIGHT_DATE, s_flight.date, sizeof(s_flight.date));
   copy_tuple(iter, MESSAGE_KEY_ORIGIN, s_flight.origin, sizeof(s_flight.origin));
@@ -566,3 +577,4 @@ int main(void) {
   app_event_loop();
   deinit();
 }
+#endif

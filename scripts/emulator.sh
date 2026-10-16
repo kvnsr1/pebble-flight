@@ -2,8 +2,11 @@
 set -eu
 
 PROJECT_DIR=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
-export PATH="$PROJECT_DIR/.tools/node/bin:$PROJECT_DIR/.tools/bin:$PATH"
-export DYLD_LIBRARY_PATH="$PROJECT_DIR/.tools/libpng/lib"
+TOOLS_DIR=${PEBBLE_TOOLS_DIR:-"$PROJECT_DIR/.tools"}
+export PATH="$TOOLS_DIR/node/bin:$TOOLS_DIR/bin:$PATH"
+if [ -d "$TOOLS_DIR/libpng/lib" ]; then
+  export DYLD_LIBRARY_PATH="$TOOLS_DIR/libpng/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
+fi
 
 cd "$PROJECT_DIR"
 exec pebble install --emulator emery --logs
