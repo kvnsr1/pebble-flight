@@ -105,6 +105,7 @@ storage['pebbleFlight.refreshState']=JSON.stringify(states);
 context.module.exports.start({nativeUI:true});
 assert.strictEqual(JSON.parse(storage['pebbleFlight.flights']).length,2);
 states['BA284|2026-10-16'].lastRequestAt=Date.now()-31000;
+states['BA284|2026-10-16'].nativeRequestedAt=Date.now()-31000;
 storage['pebbleFlight.refreshState']=JSON.stringify(states);
 handlers.appmessage({payload:{REQUEST_SELECT_FLIGHT:0,REQUEST_REFRESH:1}});
 assert.strictEqual(requests.length,3,'explicit refresh may retrieve baggage after landing');

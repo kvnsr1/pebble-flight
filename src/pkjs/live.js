@@ -10,6 +10,7 @@ var STATE_KEY = 'pebbleFlight.refreshState';
 var DETAILS_KEY = 'pebbleFlight.aircraftDetails';
 var LEGACY_CACHE_KEY = 'pebbleFlight.lastFlight';
 var RAW_CACHE_KEY = 'pebbleFlight.rawCache';
+var GENERATION_KEY = 'pebbleFlight.snapshotGeneration';
 var nativeUI = false;
 var nativeView = null;
 var nativeSender = null;
@@ -20,7 +21,11 @@ var requests = {};
 function syncNative(config) {
   var raw = readJson(RAW_CACHE_KEY);
   var frames = [];
-  var generation = ++nativeGeneration;
+  // The phone JS context may restart while the watch app stays open. Keep
+  // snapshot ordering across that restart so the watch accepts the new data.
+  nativeGeneration = Math.max(nativeGeneration, parseInt(localStorage.getItem(GENERATION_KEY), 10) || 0) + 1;
+  localStorage.setItem(GENERATION_KEY, String(nativeGeneration));
+  var generation = nativeGeneration;
   config.flights.forEach(function(flight, index) {
     var key = flightKey(flight);
     var message = cachedMessage(flight);
@@ -314,26 +319,33 @@ function refresh(force) {
   if (requests[selectedKey]) { showCurrent(config); return; }
   var states = readJson(STATE_KEY);
   var state = states[selectedKey];
-  if (flightTools.isTerminal(state) && (!nativeUI || !force)) {
+  var raw = nativeUI && readJson(RAW_CACHE_KEY)[selectedKey];
+  var needsNativeData = nativeUI && !(raw && raw.flight);
+  // An upgrade can retain the old refresh schedule without a raw record for
+  // the new UI. Fetch that record once, including a retained landed flight.
+  if (flightTools.isTerminal(state) && (!nativeUI || (!force && !needsNativeData))) {
     showCurrent(config);
     return;
   }
   var now = Date.now();
   var isImmediate = selectedKey === immediateFlightKey(config, states);
-  if (!force && !flightTools.refreshIsDue(
+  if (!force && !needsNativeData && !flightTools.refreshIsDue(
     state, configuredDepartureMs(selected), isImmediate, now)) {
     showCurrent(config);
     return;
   }
 
   // A manual request bypasses the schedule, with a short duplicate-tap cooldown.
-  if (force && state && state.lastRequestAt && Date.now() - state.lastRequestAt < 30000) {
+  var lastAttempt = state && (nativeUI ? state.nativeRequestedAt : state.lastRequestAt);
+  if ((force || needsNativeData) && lastAttempt && now - lastAttempt < 30000) {
     showCurrent(config); return;
   }
   send({IS_LOADING: 1, ERROR_MESSAGE: ''});
-  requests[selectedKey] = true;
+  var job = {};
+  requests[selectedKey] = job;
   state = state || {};
   state.lastRequestAt = now;
+  if (nativeUI) { state.nativeRequestedAt = now; }
   states[selectedKey] = state;
   writeJson(STATE_KEY, states);
   var window = dateWindow(selected.flightDate);
@@ -346,6 +358,7 @@ function refresh(force) {
   request.setRequestHeader('x-apikey', config.apiKey);
   request.timeout = 15000;
   function sendIfStillSelected(message) {
+    if (requests[selectedKey] !== job) { return; }
     delete requests[selectedKey];
     if (nativeUI) {
       transient[selectedKey] = {loading: false, error: message};
@@ -356,6 +369,7 @@ function refresh(force) {
     if (active && flightKey(active) === selectedKey) { sendError(message); }
   }
   request.onload = function() {
+    if (requests[selectedKey] !== job) { return; }
     if (request.status < 200 || request.status >= 300) {
       sendIfStillSelected(apiError(request.status));
       return;
@@ -371,10 +385,10 @@ function refresh(force) {
       var rawCache = readJson(RAW_CACHE_KEY);
       rawCache[selectedKey] = {flight: flight, updatedAt: Date.now()};
       writeJson(RAW_CACHE_KEY, rawCache);
-      delete requests[selectedKey];
       transient[selectedKey] = {loading: false, error: ''};
       var latestStates = readJson(STATE_KEY);
       latestStates[selectedKey] = flightTools.toRefreshState(flight, now);
+      if (nativeUI) { latestStates[selectedKey].nativeRequestedAt = now; }
       writeJson(STATE_KEY, latestStates);
       message.IS_LOADING = 0;
       message.ERROR_MESSAGE = '';
@@ -383,6 +397,7 @@ function refresh(force) {
       var latest = currentFlight(settings());
       if (nativeUI) { syncNative(settings()); }
       else if (latest && flightKey(latest) === selectedKey) { send(message); }
+      delete requests[selectedKey];
     } catch (error) {
       sendIfStillSelected('Could not read flight data');
     }
@@ -493,7 +508,8 @@ function start(options) {
   showCurrent(config);
   refresh(false);
 }
-Pebble.addEventListener('ready', start);
+// index.js owns the ready/mode handshake. Registering another ready listener
+// here could restart in legacy mode after phone settings loaded this module.
 module.exports = {start: start, sync: function() { if (nativeUI) { syncNative(settings()); } }};
 
 Pebble.addEventListener('appmessage', function(event) {
@@ -530,11 +546,20 @@ Pebble.addEventListener('webviewclosed', function(event) {
       sendError('Add at least one flight in phone settings');
       return;
     }
+    var keyChanged = Boolean(config.apiKey && config.apiKey !== localStorage.getItem('aeroApiKey'));
     if (config.apiKey) { localStorage.setItem('aeroApiKey', config.apiKey); }
+    if (nativeUI && keyChanged) {
+      // An explicit credential change must not inherit an earlier failure's
+      // cooldown. Ignore replies from requests issued with the previous key.
+      requests = {};
+      var states = readJson(STATE_KEY);
+      Object.keys(states).forEach(function(key) { delete states[key].nativeRequestedAt; });
+      writeJson(STATE_KEY, states);
+    }
     localStorage.setItem(FLIGHTS_KEY, JSON.stringify(flights));
     localStorage.setItem(ACTIVE_KEY, '0');
     showCurrent(settings());
-    refresh(false);
+    refresh(nativeUI && keyChanged);
   } catch (error) {
     sendError('Settings could not be saved');
   }

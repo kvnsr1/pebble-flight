@@ -12,15 +12,9 @@ function localTime(iso, timezone) {
 
 function deviceLocalTime(iso) {
   if (!iso) { return '--'; }
-  if (typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
-    try {
-      return new Intl.DateTimeFormat('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      }).format(new Date(iso)).replace(/\s/g, ' ');
-    } catch (ignore) {}
-  }
+  // Some PebbleKit JS runtimes expose Intl without usable ICU data. Calling
+  // its formatter can abort the runtime instead of throwing a catchable error.
+  // These are phone-local labels; native Date getters need no locale database.
   var date = new Date(iso);
   var hour = date.getHours();
   return (hour % 12 || 12) + ':' + ('0' + date.getMinutes()).slice(-2) + (hour >= 12 ? ' PM' : ' AM');
@@ -28,20 +22,9 @@ function deviceLocalTime(iso) {
 
 function deviceLocalDateTime(epoch) {
   if (!epoch) { return '--'; }
-  if (typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
-    try {
-      return new Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      }).format(new Date(epoch)).replace(/,|\s/g, function(match) {
-        return match === ',' ? '' : ' ';
-      });
-    } catch (ignore) {}
-  }
-  return deviceLocalTime(new Date(epoch).toISOString());
+  var date = new Date(epoch);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months[date.getMonth()] + ' ' + date.getDate() + ' ' + deviceLocalTime(date.toISOString());
 }
 
 function epochMs(iso) {
