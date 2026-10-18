@@ -106,6 +106,16 @@
           "menuIcon": true,
           "storageFormat": "png",
           "memoryFormat": "8Bit"
+        },
+        {
+          "type": "raw",
+          "name": "BOOKING_PASS_25",
+          "file": "booking-icons/Boarding_pass_25px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "BOOKING_SEATS_80",
+          "file": "booking-icons/Plane_bench_window_80px.pdc"
         }
       ]
     }

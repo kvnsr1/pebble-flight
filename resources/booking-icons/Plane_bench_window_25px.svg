@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 25 25">
+<path d="M3 4L5 4L6 5L6 11L5 12L3 12L2 11L2 5Z" fill="#fff" stroke="#000" stroke-width="2"/>
+<path d="M10 20L9 23L11 23L12 20Z" fill="#fff" stroke="#000" stroke-width="2"/>
+<path d="M18 20L19 23L21 23L20 20Z" fill="#fff" stroke="#000" stroke-width="2"/>
+<path d="M8 10L12 10L12 17L8 17Z" fill="#fff" stroke="#000" stroke-width="2"/>
+<path d="M13 10L17 10L17 17L13 17Z" fill="#fff" stroke="#000" stroke-width="2"/>
+<path d="M18 10L22 10L22 17L18 17Z" fill="#fff" stroke="#000" stroke-width="2"/>
+<path d="M9 7L11 7L12 8L12 10L11 11L9 11L8 10L8 8Z" fill="#fff" stroke="#000" stroke-width="2"/>
+<path d="M14 7L16 7L17 8L17 10L16 11L14 11L13 10L13 8Z" fill="#fff" stroke="#000" stroke-width="2"/>
+<path d="M19 7L21 7L22 8L22 10L21 11L19 11L18 10L18 8Z" fill="#fff" stroke="#000" stroke-width="2"/>
+<path d="M8 17L12 17L13 18L13 20L7 20L7 18Z" fill="#fff" stroke="#000" stroke-width="2"/>
+<path d="M13 17L17 17L18 18L18 20L12 20L12 18Z" fill="#fff" stroke="#000" stroke-width="2"/>
+<path d="M18 17L22 17L23 18L23 20L17 20L17 18Z" fill="#fff" stroke="#000" stroke-width="2"/>
+<path d="M8 14H10" fill="none" stroke="#000" stroke-width="2"/>
+<path d="M12 14H15" fill="none" stroke="#000" stroke-width="2"/>
+<path d="M17 14H20" fill="none" stroke="#000" stroke-width="2"/>
+<path d="M22 14H23" fill="none" stroke="#000" stroke-width="2"/>
+</svg>
