@@ -25,7 +25,6 @@
     0,
     25,
     35,
-    40,
     45,
     50,
     60,
@@ -60,5 +59,126 @@
     "No authenticated CloudPebble import/build/run",
     "No live API lookup"
   ],
-  "emulator_note": "SDK bridge stalled during the long AppMessage-driven sweep. Switched to the offline native preview and completed all 17 logos with physical buttons. Native screenshots cover the listed progress samples, not every integer percentage."
+  "emulator_note": "Completed offline native preview with physical-button events for all 18 examples. No live requests. Screenshots cover listed progress samples, not every integer percentage.",
+  "marker_update": {
+    "source": "User-supplied Scheduled_flight_50x50.svg and Scheduled_flight_80x80.svg",
+    "converter": "HBehrens pdc_tool 0.3.4",
+    "in_flight_resource": "Scheduled_flight_80x80.pdc",
+    "other_known_progress_resource": "Scheduled_flight_50x50.pdc",
+    "native_display_bounds": "25x25, original colors, no circular badge",
+    "geometry": "Same 108px centerline, 235 degree start, 250 degree sweep",
+    "only_overview_marker_pixels_changed": {
+      "Southwest": [
+        40,
+        99,
+        67,
+        126
+      ],
+      "American": [
+        73,
+        16,
+        100,
+        43
+      ],
+      "Delta": [
+        128,
+        99,
+        155,
+        126
+      ],
+      "United": [
+        40,
+        99,
+        67,
+        126
+      ],
+      "Frontier": [
+        40,
+        99,
+        67,
+        126
+      ],
+      "Alaska": [
+        52,
+        26,
+        79,
+        53
+      ],
+      "Air_China": null,
+      "Cathay_Pacific": [
+        117,
+        26,
+        144,
+        53
+      ],
+      "JSX": [
+        40,
+        99,
+        67,
+        126
+      ],
+      "LATAM": [
+        131,
+        43,
+        158,
+        70
+      ],
+      "Hawaiian": [
+        37,
+        43,
+        64,
+        70
+      ],
+      "Korean_Air": [
+        84,
+        15,
+        111,
+        42
+      ],
+      "Lufthansa": [
+        137,
+        77,
+        164,
+        104
+      ],
+      "Air_France": [
+        40,
+        99,
+        67,
+        126
+      ],
+      "KLM": [
+        128,
+        99,
+        155,
+        126
+      ],
+      "Turkish": [
+        40,
+        99,
+        67,
+        126
+      ],
+      "China_Eastern": [
+        107,
+        20,
+        134,
+        47
+      ],
+      "Fallback": null
+    },
+    "tool_renders": "SVG/PDC pairs identical using pdc_tool on black, white and dark-green at source resolution",
+    "conversion_note": "80px source stroke 3.2866 quantized by PDC converter; exact diagnostic retained in asset manifest",
+    "mock_build": {
+      "ram": 13525,
+      "heap": 117547,
+      "resources": 16487
+    },
+    "live_build": {
+      "ram": 38697,
+      "heap": 92375,
+      "resources": 16487
+    },
+    "production_pbw_sha256": "68ffc5bc37e0008b5928fe1b7b1a011c718b1fc1c77d23c1e669a718a0001a01"
+  }
 }

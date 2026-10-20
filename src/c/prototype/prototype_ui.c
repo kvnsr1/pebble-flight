@@ -201,7 +201,7 @@ static const char *time_heading(const FlightTime *time, bool departure) {
 static void draw_overview(GContext *ctx, const Flight *flight) {
   label(ctx,"OVERVIEW",10,1,120);
   text(ctx,source_label(),145,1,40,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentRight);
-  // Retain a 116px outside diameter. The 8px stroke and aircraft badge use
+  // Retain a 116px outside diameter. The 8px stroke and aircraft marker use
   // the same 108px centerline circle, keeping the marker on the track.
   GRect ring=GRect(40,24,116,116);
   GRect track=grect_inset(ring,GEdgeInsets(4));
@@ -217,7 +217,7 @@ static void draw_overview(GContext *ctx, const Flight *flight) {
   }
   if (progress>=0) {
     GPoint marker=gpoint_from_polar(track,GOvalScaleModeFitCircle,start+sweep*progress/100);
-    pebble_plane_badge_draw(ctx,marker);
+    pebble_plane_progress_draw(ctx,marker,flight->status == FLIGHT_IN_FLIGHT);
     char percent[16];
     snprintf(percent,sizeof(percent),"%d%%",progress);
     text(ctx,percent,56,40,84,28,FONT_KEY_GOTHIC_24_BOLD,

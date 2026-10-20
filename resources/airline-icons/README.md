@@ -33,4 +33,5 @@ Mapping uses the saved flight-number prefix (marketing airline); a prefix must
 be followed by a digit, optionally after spaces. Codeshare operating carriers
 are not guessed. Unsupported carriers use a neutral aircraft in the logo slot.
 The airline logo sits below the progress percentage and above the flight number.
-The moving aircraft is a separate white badge centered on the progress stroke.
+The moving aircraft is a separate white/black PDC centered on the progress stroke.
+Its 50/80 px source variants are documented in [progress-plane](../progress-plane/README.md).

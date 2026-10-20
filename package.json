@@ -120,6 +120,16 @@
         },
         {
           "type": "raw",
+          "name": "PROGRESS_PLANE_50",
+          "file": "progress-plane/Scheduled_flight_50x50.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "PROGRESS_PLANE_80",
+          "file": "progress-plane/Scheduled_flight_80x80.pdc"
+        },
+        {
+          "type": "raw",
           "name": "AIRLINE_AIR_CHINA_25",
           "file": "airline-icons/Air_China_color_25px.pdc"
         },

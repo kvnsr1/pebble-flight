@@ -2,7 +2,7 @@
 
 **Overview mockup — unapproved, local branch `codex/overview-airline-mockup`.**
 This branch centers the airline logo inside the circle, reduces the percentage,
-aligns an aircraft badge with the progress stroke and adds all 17 supplied airline
+aligns the supplied white/black PDC aircraft with the progress stroke and adds all 17 supplied airline
 logos. `main` remains unchanged. See [the mockup and offline preview](docs/OVERVIEW_MOCKUP.md).
 The release notes below describe the existing production version.
 

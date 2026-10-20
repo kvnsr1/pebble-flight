@@ -1,0 +1,21 @@
+{
+  "converter": "HBehrens pdc_tool 0.3.4",
+  "files": [
+    {
+      "source": "Scheduled_flight_50x50.svg",
+      "pdc": "Scheduled_flight_50x50.pdc",
+      "size": 50,
+      "source_sha256": "71b241faae3f0eeeb14ac21a5edab8a63e591db366278d72512857036b5e6079",
+      "pdc_sha256": "8d3c8819498ceb223d8077fbe230dde7badcbcd8b413454f34e38f0c8e60722f",
+      "diagnostics": ""
+    },
+    {
+      "source": "Scheduled_flight_80x80.svg",
+      "pdc": "Scheduled_flight_80x80.pdc",
+      "size": 80,
+      "source_sha256": "a88ccfbe7711abe2df55afab225ecaf624645aad0378bb3340a6343a77b58eca",
+      "pdc_sha256": "80133f246cb65a0a936b12d8f5f4390bbab8322172a5e3a0b6d0f36b8a39bc6f",
+      "diagnostics": "Stroke width of 3.2866 cannot be expressed in PDC. Clamped to closed valid color."
+    }
+  ]
+}
