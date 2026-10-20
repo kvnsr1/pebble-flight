@@ -12,20 +12,28 @@ void pebble_plane_init(void) {
   s_body = gpath_create(&(GPathInfo){8, s_body_points});
   s_wing = gpath_create(&(GPathInfo){5, s_wing_points});
 }
-void pebble_plane_draw(GContext *ctx, GPoint center) {
+static void draw(GContext *ctx, GPoint center, GColor fill, GColor stroke) {
   if (!s_body || !s_wing) { return; }
   GPoint offset = GPoint(center.x - 12, center.y - 12);
   gpath_move_to(s_body, offset);
   gpath_move_to(s_wing, offset);
   graphics_context_set_stroke_width(ctx, 2);
-  graphics_context_set_stroke_color(ctx, GColorBlack);
-  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_context_set_stroke_color(ctx, stroke);
+  graphics_context_set_fill_color(ctx, fill);
   gpath_draw_filled(ctx, s_body);
   gpath_draw_outline(ctx, s_body);
   gpath_draw_filled(ctx, s_wing);
   gpath_draw_outline_open(ctx, s_wing);
   graphics_draw_line(ctx, GPoint(offset.x + 22, offset.y + 6),
                      GPoint(offset.x + 20, offset.y + 8));
+}
+void pebble_plane_draw(GContext *ctx, GPoint center) {
+  draw(ctx,center,GColorWhite,GColorBlack);
+}
+void pebble_plane_badge_draw(GContext *ctx, GPoint center) {
+  graphics_context_set_fill_color(ctx,GColorWhite);
+  graphics_fill_circle(ctx,center,13);
+  draw(ctx,center,GColorDarkGreen,GColorDarkGreen);
 }
 void pebble_plane_deinit(void) {
   if (s_body) { gpath_destroy(s_body); }

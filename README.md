@@ -1,5 +1,11 @@
 # Jetebble
 
+**Overview mockup — unapproved, local branch `codex/overview-airline-mockup`.**
+This branch centers the airline logo inside the circle, reduces the percentage,
+aligns an aircraft badge with the progress stroke and adds all 17 supplied airline
+logos. `main` remains unchanged. See [the mockup and offline preview](docs/OVERVIEW_MOCKUP.md).
+The release notes below describe the existing production version.
+
 **Version 0.7.4** renames Pebble Flight to **Jetebble** and uses the approved green native design as its
 current interface. It runs on **Pebble Time 2 / emery (200×228)** using the
 **Pebble C SDK**, with PebbleKit JS providing flight data and phone settings.

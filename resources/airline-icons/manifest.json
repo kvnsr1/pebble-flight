@@ -1,27 +1,121 @@
 [
   {
+    "file": "Air_China_color_25px.pdc",
+    "airline": "Air_China",
+    "iata": "CA",
+    "icao": "CCA",
+    "sha256": "50d8299251b661370592b4971b83565812b6cbcb8fd5016dff73844850369940"
+  },
+  {
+    "file": "Air_France_color_25px.pdc",
+    "airline": "Air_France",
+    "iata": "AF",
+    "icao": "AFR",
+    "sha256": "e16c829cf8838f2c807a4da900410c0513031b3cde19b1a28341fdaca734349a"
+  },
+  {
+    "file": "Alaska_airlines_color_25px.pdc",
+    "airline": "Alaska",
+    "iata": "AS",
+    "icao": "ASA",
+    "sha256": "abff5f528155df737e2c3cfade4ded50be3c8738de7c2adf9bd0a7bea2dacc27"
+  },
+  {
     "file": "American_airlines_color_25px.pdc",
     "airline": "American",
+    "iata": "AA",
+    "icao": "AAL",
     "sha256": "a9781d387a5bc6e3546f1e377b25e434260e8d14ba22801d5659f69c4cb0672c"
+  },
+  {
+    "file": "Cathay_Pacific_color_25px.pdc",
+    "airline": "Cathay_Pacific",
+    "iata": "CX",
+    "icao": "CPA",
+    "sha256": "528900cfa3ff78899e2c702534597a83fd8b2b75ab2ecf28b0a6be470c680a73"
+  },
+  {
+    "file": "China_Eastern_airlines_color_25px.pdc",
+    "airline": "China_Eastern",
+    "iata": "MU",
+    "icao": "CES",
+    "sha256": "ca1c1befb41d515f6a0128446be70a3e41b2a16fcb3756696c6cacb280b0f044"
   },
   {
     "file": "Delta_airlines_color_25px.pdc",
     "airline": "Delta",
+    "iata": "DL",
+    "icao": "DAL",
     "sha256": "157fcd109f558cc8e85147acb15a9452e7d06a6ba73d2536fd8711743b80d968"
   },
   {
     "file": "Frontier_airlines_color_25px.pdc",
     "airline": "Frontier",
+    "iata": "F9",
+    "icao": "FFT",
     "sha256": "c9e9934e836eadd50dd638bda32b578cf86d31f1d8fc6d65801ea931fdf9bfc1"
+  },
+  {
+    "file": "Hawaiian_airlines_color_25px.pdc",
+    "airline": "Hawaiian",
+    "iata": "HA",
+    "icao": "HAL",
+    "sha256": "e47ab209712b1b43ed49334c07a7f65d7ebaef92f068be4a04e1847e9c6910ef"
+  },
+  {
+    "file": "JSX_color_25px.pdc",
+    "airline": "JSX",
+    "iata": "XE",
+    "icao": "JSX",
+    "sha256": "cec060c814fdae46eebce408aa9e85232532b0f9e3565a58ab399ac6957323f4"
+  },
+  {
+    "file": "KLM_color_25px.pdc",
+    "airline": "KLM",
+    "iata": "KL",
+    "icao": "KLM",
+    "sha256": "d9890e95faba31b1c0a09065ab35e21ca14b4b80b3bab72ba3269ab2b9bfcbc2"
+  },
+  {
+    "file": "Korean_Air_color_25px.pdc",
+    "airline": "Korean_Air",
+    "iata": "KE",
+    "icao": "KAL",
+    "sha256": "d8e23c1c5731230621da637fb810d212a3edb734840d26e18c53d53ac42dc409"
+  },
+  {
+    "file": "LATAM_color_25px.pdc",
+    "airline": "LATAM",
+    "iata": "LA",
+    "icao": "LAN",
+    "sha256": "ecad83a1a3ee3d42d7833d728eedc832ea2094c4a3ced7c0407512bb779ba7c5"
+  },
+  {
+    "file": "Lufthansa_color_25px.pdc",
+    "airline": "Lufthansa",
+    "iata": "LH",
+    "icao": "DLH",
+    "sha256": "458ea8a73d9739b80115b30ca2dc6748bcd1eac44a198e114c18964b8077de92"
   },
   {
     "file": "Southwest_heart_color_25px.pdc",
     "airline": "Southwest",
+    "iata": "WN",
+    "icao": "SWA",
     "sha256": "44087848b449ca52860fef53f9ca5d1b42db354732f74de00c1705aebcdb6c7a"
+  },
+  {
+    "file": "Turkish_airlines_color_25px.pdc",
+    "airline": "Turkish",
+    "iata": "TK",
+    "icao": "THY",
+    "sha256": "3e1112c43336a03ad3c3d3c800d90cf390303e54d1081274b52fa91139e25483"
   },
   {
     "file": "United_globe_color_25px.pdc",
     "airline": "United",
+    "iata": "UA",
+    "icao": "UAL",
     "sha256": "17c8d748955bf85dd25b8e923a7651fd1feac860ad2ff6f504ed264ca04649f9"
   }
 ]

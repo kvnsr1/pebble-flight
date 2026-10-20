@@ -120,8 +120,33 @@
         },
         {
           "type": "raw",
+          "name": "AIRLINE_AIR_CHINA_25",
+          "file": "airline-icons/Air_China_color_25px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "AIRLINE_AIR_FRANCE_25",
+          "file": "airline-icons/Air_France_color_25px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "AIRLINE_ALASKA_25",
+          "file": "airline-icons/Alaska_airlines_color_25px.pdc"
+        },
+        {
+          "type": "raw",
           "name": "AIRLINE_AMERICAN_25",
           "file": "airline-icons/American_airlines_color_25px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "AIRLINE_CATHAY_PACIFIC_25",
+          "file": "airline-icons/Cathay_Pacific_color_25px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "AIRLINE_CHINA_EASTERN_25",
+          "file": "airline-icons/China_Eastern_airlines_color_25px.pdc"
         },
         {
           "type": "raw",
@@ -135,8 +160,43 @@
         },
         {
           "type": "raw",
+          "name": "AIRLINE_HAWAIIAN_25",
+          "file": "airline-icons/Hawaiian_airlines_color_25px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "AIRLINE_JSX_25",
+          "file": "airline-icons/JSX_color_25px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "AIRLINE_KLM_25",
+          "file": "airline-icons/KLM_color_25px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "AIRLINE_KOREAN_AIR_25",
+          "file": "airline-icons/Korean_Air_color_25px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "AIRLINE_LATAM_25",
+          "file": "airline-icons/LATAM_color_25px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "AIRLINE_LUFTHANSA_25",
+          "file": "airline-icons/Lufthansa_color_25px.pdc"
+        },
+        {
+          "type": "raw",
           "name": "AIRLINE_SOUTHWEST_25",
           "file": "airline-icons/Southwest_heart_color_25px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "AIRLINE_TURKISH_25",
+          "file": "airline-icons/Turkish_airlines_color_25px.pdc"
         },
         {
           "type": "raw",

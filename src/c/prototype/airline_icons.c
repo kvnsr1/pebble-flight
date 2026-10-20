@@ -17,11 +17,30 @@ static bool carrier(const char *number, const char *prefix) {
 bool airline_icon_draw(GContext *ctx, const char *number, GPoint origin) {
   if (!number) { return false; }
   uint32_t resource=0;
-  if (carrier(number,"AA") || carrier(number,"AAL")) { resource=RESOURCE_ID_AIRLINE_AMERICAN_25; }
-  else if (carrier(number,"DL") || carrier(number,"DAL")) { resource=RESOURCE_ID_AIRLINE_DELTA_25; }
-  else if (carrier(number,"F9") || carrier(number,"FFT")) { resource=RESOURCE_ID_AIRLINE_FRONTIER_25; }
-  else if (carrier(number,"WN") || carrier(number,"SWA")) { resource=RESOURCE_ID_AIRLINE_SOUTHWEST_25; }
-  else if (carrier(number,"UA") || carrier(number,"UAL")) { resource=RESOURCE_ID_AIRLINE_UNITED_25; }
+  static const struct { const char *iata, *icao; uint32_t resource; } airlines[]={
+    {"CA","CCA",RESOURCE_ID_AIRLINE_AIR_CHINA_25},
+    {"AF","AFR",RESOURCE_ID_AIRLINE_AIR_FRANCE_25},
+    {"AS","ASA",RESOURCE_ID_AIRLINE_ALASKA_25},
+    {"AA","AAL",RESOURCE_ID_AIRLINE_AMERICAN_25},
+    {"CX","CPA",RESOURCE_ID_AIRLINE_CATHAY_PACIFIC_25},
+    {"MU","CES",RESOURCE_ID_AIRLINE_CHINA_EASTERN_25},
+    {"DL","DAL",RESOURCE_ID_AIRLINE_DELTA_25},
+    {"F9","FFT",RESOURCE_ID_AIRLINE_FRONTIER_25},
+    {"HA","HAL",RESOURCE_ID_AIRLINE_HAWAIIAN_25},
+    {"XE","JSX",RESOURCE_ID_AIRLINE_JSX_25},
+    {"KL","KLM",RESOURCE_ID_AIRLINE_KLM_25},
+    {"KE","KAL",RESOURCE_ID_AIRLINE_KOREAN_AIR_25},
+    {"LA","LAN",RESOURCE_ID_AIRLINE_LATAM_25},
+    {"LH","DLH",RESOURCE_ID_AIRLINE_LUFTHANSA_25},
+    {"WN","SWA",RESOURCE_ID_AIRLINE_SOUTHWEST_25},
+    {"TK","THY",RESOURCE_ID_AIRLINE_TURKISH_25},
+    {"UA","UAL",RESOURCE_ID_AIRLINE_UNITED_25},
+  };
+  for (unsigned i=0;i<ARRAY_LENGTH(airlines);i++) {
+    if (carrier(number,airlines[i].iata) || carrier(number,airlines[i].icao)) {
+      resource=airlines[i].resource; break;
+    }
+  }
   if (!resource) { return false; }
   // Keep just the current carrier in RAM, and release it when switching carriers.
   if (resource!=s_resource) {

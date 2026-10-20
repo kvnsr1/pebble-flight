@@ -199,36 +199,38 @@ static const char *time_heading(const FlightTime *time, bool departure) {
   return departure?"DEP / SCHED":"ARR / SCHED";
 }
 static void draw_overview(GContext *ctx, const Flight *flight) {
-  if (!airline_icon_draw(ctx,flight->number,GPoint(10,0))) {
-    label(ctx,"OVERVIEW",10,1,120);
-  }
+  label(ctx,"OVERVIEW",10,1,120);
   text(ctx,source_label(),145,1,40,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentRight);
-  // Keep the 25px plane clear of the flight number at both arc endpoints.
+  // Retain a 116px outside diameter. The 8px stroke and aircraft badge use
+  // the same 108px centerline circle, keeping the marker on the track.
   GRect ring=GRect(40,24,116,116);
-  int start=DEG_TO_TRIGANGLE(225);
-  int sweep=DEG_TO_TRIGANGLE(270);
+  GRect track=grect_inset(ring,GEdgeInsets(4));
+  int start=DEG_TO_TRIGANGLE(235);
+  int sweep=DEG_TO_TRIGANGLE(250);
   int progress=flight_progress(flight);
-  graphics_context_set_fill_color(ctx,GColorMayGreen);
-  graphics_fill_radial(ctx,ring,GOvalScaleModeFitCircle,8,start,start+sweep);
+  graphics_context_set_stroke_width(ctx,8);
+  graphics_context_set_stroke_color(ctx,GColorMayGreen);
+  graphics_draw_arc(ctx,track,GOvalScaleModeFitCircle,start,start+sweep);
   if (progress>0) {
-    graphics_context_set_fill_color(ctx,accent());
-    graphics_fill_radial(ctx,ring,GOvalScaleModeFitCircle,8,start,start+sweep*progress/100);
+    graphics_context_set_stroke_color(ctx,accent());
+    graphics_draw_arc(ctx,track,GOvalScaleModeFitCircle,start,start+sweep*progress/100);
   }
   if (progress>=0) {
-    GPoint marker=gpoint_from_polar(ring,GOvalScaleModeFitCircle,start+sweep*progress/100);
-    graphics_context_set_fill_color(ctx,background());
-    graphics_fill_circle(ctx,marker,14);
-    pebble_plane_draw(ctx,marker);
+    GPoint marker=gpoint_from_polar(track,GOvalScaleModeFitCircle,start+sweep*progress/100);
+    pebble_plane_badge_draw(ctx,marker);
     char percent[16];
     snprintf(percent,sizeof(percent),"%d%%",progress);
-    text(ctx,percent,56,49,84,38,progress==100?FONT_KEY_GOTHIC_28_BOLD:FONT_KEY_BITHAM_30_BLACK,
+    text(ctx,percent,56,40,84,28,FONT_KEY_GOTHIC_24_BOLD,
          GColorWhite,GTextAlignmentCenter);
   } else {
-    if (progress==-1) { status_icon(ctx,FLIGHT_CANCELED,GPoint(98,68),GColorWhite); }
-    text(ctx,progress==-1?"NO JOURNEY":"PROGRESS",56,progress==-1?75:59,84,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentCenter);
-    if (progress==-2) { text(ctx,"UNKNOWN",56,74,84,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentCenter); }
+    if (progress==-1) { status_icon(ctx,FLIGHT_CANCELED,GPoint(98,39),GColorWhite); }
+    text(ctx,progress==-1?"NO JOURNEY":"PROGRESS",56,progress==-1?44:29,84,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentCenter);
+    if (progress==-2) { text(ctx,"UNKNOWN",56,43,84,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentCenter); }
   }
-  text(ctx,flight->number,51,89,94,25,FONT_KEY_GOTHIC_18_BOLD,GColorWhite,GTextAlignmentCenter);
+  if (!airline_icon_draw(ctx,flight->number,GPoint(86,66))) {
+    pebble_plane_draw(ctx,GPoint(98,78));
+  }
+  text(ctx,flight->number,51,91,94,25,FONT_KEY_GOTHIC_18_BOLD,GColorWhite,GTextAlignmentCenter);
   status_icon(ctx,flight->status,GPoint(23,136),status_color(flight));
   char status[40];
   text(ctx,status_text(flight,status,sizeof(status)),35,123,145,25,FONT_KEY_GOTHIC_18_BOLD,status_color(flight),GTextAlignmentCenter);

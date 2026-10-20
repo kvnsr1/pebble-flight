@@ -1,0 +1,64 @@
+{
+  "mode": "Native offline mockup, synthetic fixtures; no credentials or flight-service requests",
+  "platform": "emery 200x228",
+  "airlines": [
+    "Southwest",
+    "American",
+    "Delta",
+    "United",
+    "Frontier",
+    "Alaska",
+    "Air_China",
+    "Cathay_Pacific",
+    "JSX",
+    "LATAM",
+    "Hawaiian",
+    "Korean_Air",
+    "Lufthansa",
+    "Air_France",
+    "KLM",
+    "Turkish",
+    "China_Eastern"
+  ],
+  "neutral_fallback": "BA284",
+  "progress_samples": [
+    0,
+    25,
+    35,
+    40,
+    45,
+    50,
+    60,
+    65,
+    75,
+    90,
+    100
+  ],
+  "status_samples": [
+    "upcoming",
+    "boarding",
+    "in flight",
+    "landed",
+    "delayed +75 min",
+    "canceled",
+    "unknown progress"
+  ],
+  "pixel_comparisons": [
+    "all-flights unchanged pixel-for-pixel",
+    "departure unchanged pixel-for-pixel",
+    "arrival unchanged pixel-for-pixel",
+    "booking unchanged pixel-for-pixel",
+    "list-restored unchanged pixel-for-pixel",
+    "Back restores selection and scroll"
+  ],
+  "automated_suites": 9,
+  "main_unchanged": "0baeee3",
+  "git_pushes": 0,
+  "preview_uuid": "8a2dccb9-2ff6-4439-9aeb-0876a23c833d",
+  "limitations": [
+    "No physical-watch test",
+    "No authenticated CloudPebble import/build/run",
+    "No live API lookup"
+  ],
+  "emulator_note": "SDK bridge stalled during the long AppMessage-driven sweep. Switched to the offline native preview and completed all 17 logos with physical buttons. Native screenshots cover the listed progress samples, not every integer percentage."
+}
