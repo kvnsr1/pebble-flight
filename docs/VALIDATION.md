@@ -1,5 +1,8 @@
 # Validation — Pebble Flight 0.7.0
 
+Current version: [Jetebble 0.7.4 validation and installation](JETEBBLE.md).
+The following records the original 0.7.0 promotion checks.
+
 Reviewed 16 October 2026. The approved interface is now the default live app;
 [the prototype-only validation history](PROTOTYPE_VALIDATION.md) is retained.
 

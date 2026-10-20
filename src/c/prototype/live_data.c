@@ -2,6 +2,7 @@
 #if PEBBLE_UI_PROTOTYPE && !PEBBLE_MOCK_DATA
 #include <pebble.h>
 #include "live_data.h"
+#include "watch_glance.h"
 static LiveStore s_store;
 static void (*s_changed)(void);
 static AppTimer *s_heartbeat;
@@ -39,6 +40,10 @@ static void inbox(DictionaryIterator *iter,void *context) {
     if (app_message_outbox_begin(&out)==APP_MSG_OK) {
       dict_write_uint8(out,MESSAGE_KEY_LIVE_MODE,2); app_message_outbox_send();
     }
+    return;
+  }
+  if (dict_find(iter,MESSAGE_KEY_GLANCE_PLAN)) {
+    watch_glance_update(string(iter,MESSAGE_KEY_GLANCE_PLAN));
     return;
   }
   if (!dict_find(iter,MESSAGE_KEY_UI_COUNT)) { return; }

@@ -81,7 +81,7 @@ context.module.exports.configure({nativeUI:true});
 assert.ok(url.indexOf('#state=')>0);
 assert.strictEqual(requests.length,0,'opening phone settings must not query the flight service');
 context.module.exports.start({nativeUI:true});
-assert.ok(sent.every(function(m){return typeof m.UI_COUNT==='number';}));
+assert.ok(sent.every(function(m){return typeof m.UI_COUNT==='number' || typeof m.GLANCE_PLAN==='string';}));
 assert.strictEqual(sent.slice(-2)[0].ERROR_MESSAGE.indexOf('AeroAPI')>=0,true);
 storage.aeroApiKey='SYNTHETIC_TEST_VALUE';
 handlers.appmessage({payload:{REQUEST_SELECT_FLIGHT:0,REQUEST_REFRESH:1}});

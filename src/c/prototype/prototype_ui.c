@@ -5,6 +5,7 @@
 #include "navigation.h"
 #include "pebble_plane.h"
 #include "booking_icons.h"
+#include "airline_icons.h"
 #include "live_data.h"
 
 static Window *s_window;
@@ -198,7 +199,9 @@ static const char *time_heading(const FlightTime *time, bool departure) {
   return departure?"DEP / SCHED":"ARR / SCHED";
 }
 static void draw_overview(GContext *ctx, const Flight *flight) {
-  label(ctx,"OVERVIEW",10,1,120);
+  if (!airline_icon_draw(ctx,flight->number,GPoint(10,0))) {
+    label(ctx,"OVERVIEW",10,1,120);
+  }
   text(ctx,source_label(),145,1,40,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentRight);
   // Keep the 25px plane clear of the flight number at both arc endpoints.
   GRect ring=GRect(40,24,116,116);
@@ -510,5 +513,6 @@ int main(void) {
   window_destroy(s_window);
   pebble_plane_deinit();
   booking_icons_deinit();
+  airline_icons_deinit();
 }
 #endif

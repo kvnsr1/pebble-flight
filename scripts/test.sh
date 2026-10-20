@@ -15,6 +15,10 @@ cc -DPEBBLE_MOCK_DATA=1 -std=c99 -Wall -Wextra -Werror test/prototype.test.c \
 "$TEST_BINARY"
 node test/native-view.test.js
 node test/live-sync.test.js
+node test/launcher-glance.test.js
+cc -std=c99 -Wall -Wextra -Werror test/glance_plan.test.c \
+  src/c/prototype/glance_plan.c -o "$TEST_BINARY"
+"$TEST_BINARY"
 cc -std=c99 -Wall -Wextra -Werror test/live_store.test.c \
   src/c/prototype/live_store.c -o "$TEST_BINARY"
 "$TEST_BINARY"

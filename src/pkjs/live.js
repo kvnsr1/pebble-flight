@@ -1,6 +1,7 @@
 'use strict';
 
 var flightTools = require('./flight');
+var launcherGlance = require('./launcher-glance');
 var API_ROOT = 'https://aeroapi.flightaware.com/aeroapi';
 var CONFIG_URL = 'https://kvnsr1.github.io/pebble-flight/config/';
 var FLIGHTS_KEY = 'pebbleFlight.flights';
@@ -41,6 +42,7 @@ function syncNative(config) {
     frames.push({UI_COUNT: 0, UI_INDEX: 0, UI_GENERATION: generation,
       ERROR_MESSAGE: config.apiKey ? 'Open phone settings to add a flight' : 'Open phone settings to add flights and an AeroAPI key'});
   }
+  frames.unshift({GLANCE_PLAN: launcherGlance.plan(config.flights, raw, readCache(), readJson(STATE_KEY), Date.now())});
   nativeSender(frames);
 }
 

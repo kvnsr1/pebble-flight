@@ -1,7 +1,7 @@
 {
   "name": "pebble-flight",
-  "version": "0.7.3",
-  "author": "Pebble Flight",
+  "version": "0.7.4",
+  "author": "Jetebble",
   "private": true,
   "keywords": [
     "pebble-app"
@@ -10,7 +10,7 @@
     "moment-timezone": "0.6.5"
   },
   "pebble": {
-    "displayName": "Pebble Flight",
+    "displayName": "Jetebble",
     "uuid": "e6fc90f6-5f5a-4f34-a18e-76f13a5b2327",
     "projectType": "native",
     "sdkVersion": "3",
@@ -95,7 +95,8 @@
       "UI_DEP_SCHEDULED_DATE": 65,
       "UI_ARR_SCHEDULED_DATE": 66,
       "UI_DEP_SCHEDULED_ZONE": 67,
-      "UI_ARR_SCHEDULED_ZONE": 68
+      "UI_ARR_SCHEDULED_ZONE": 68,
+      "GLANCE_PLAN": 69
     },
     "resources": {
       "media": [
@@ -116,6 +117,31 @@
           "type": "raw",
           "name": "BOOKING_SEATS_80",
           "file": "booking-icons/Plane_bench_window_80px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "AIRLINE_AMERICAN_25",
+          "file": "airline-icons/American_airlines_color_25px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "AIRLINE_DELTA_25",
+          "file": "airline-icons/Delta_airlines_color_25px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "AIRLINE_FRONTIER_25",
+          "file": "airline-icons/Frontier_airlines_color_25px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "AIRLINE_SOUTHWEST_25",
+          "file": "airline-icons/Southwest_heart_color_25px.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "AIRLINE_UNITED_25",
+          "file": "airline-icons/United_globe_color_25px.pdc"
         }
       ]
     }

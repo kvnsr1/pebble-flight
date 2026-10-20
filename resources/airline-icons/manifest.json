@@ -1,0 +1,27 @@
+[
+  {
+    "file": "American_airlines_color_25px.pdc",
+    "airline": "American",
+    "sha256": "a9781d387a5bc6e3546f1e377b25e434260e8d14ba22801d5659f69c4cb0672c"
+  },
+  {
+    "file": "Delta_airlines_color_25px.pdc",
+    "airline": "Delta",
+    "sha256": "157fcd109f558cc8e85147acb15a9452e7d06a6ba73d2536fd8711743b80d968"
+  },
+  {
+    "file": "Frontier_airlines_color_25px.pdc",
+    "airline": "Frontier",
+    "sha256": "c9e9934e836eadd50dd638bda32b578cf86d31f1d8fc6d65801ea931fdf9bfc1"
+  },
+  {
+    "file": "Southwest_heart_color_25px.pdc",
+    "airline": "Southwest",
+    "sha256": "44087848b449ca52860fef53f9ca5d1b42db354732f74de00c1705aebcdb6c7a"
+  },
+  {
+    "file": "United_globe_color_25px.pdc",
+    "airline": "United",
+    "sha256": "17c8d748955bf85dd25b8e923a7651fd1feac860ad2ff6f504ed264ca04649f9"
+  }
+]

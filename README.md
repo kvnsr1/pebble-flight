@@ -1,6 +1,6 @@
-# Pebble Flight
+# Jetebble
 
-**Version 0.7.3** uses the approved green native design as Pebble Flight's
+**Version 0.7.4** renames Pebble Flight to **Jetebble** and uses the approved green native design as its
 current interface. It runs on **Pebble Time 2 / emery (200×228)** using the
 **Pebble C SDK**, with PebbleKit JS providing flight data and phone settings.
 
@@ -8,6 +8,11 @@ The default build uses the existing **live FlightAware integration**. Mock mode
 is off. The original app UUID is restored so this builds as an update to Pebble
 Flight, with the same phone-storage keys for saved flights, API key, booking
 codes, seat positions and cached data.
+
+Version 0.7.4 adds a native next-flight launcher subtitle and the supplied color
+logos for American, Delta, Frontier, Southwest and United on Overview. Existing
+flight data, booking functionality and the other detail screens are retained.
+See [Jetebble branding and launcher behavior](docs/JETEBBLE.md).
 
 Version 0.7.3 uses the supplied plane-stabilizer artwork as its launcher icon.
 The original SVGs and all three PDC conversions are in `resources/launcher-icons/`.
@@ -33,14 +38,14 @@ and companion-to-watch test coverage.
    Time 2**. Keep the imported UUID, message keys and npm dependency.
 4. Compile in **Build & Run**, then run on **Emulator → emery** or install on
    your watch through the Pebble phone app's Developer Connection.
-5. In the phone app's Pebble Flight settings, use your existing flights and
+5. In the phone app's Jetebble settings, use your existing flights and
    AeroAPI key, or add them if this is a new installation.
 
 [Open the GitHub import dialog](https://cloudpebble.repebble.com/ide/import/github/kvnsr1/pebble-flight)
 (set branch `main`). SDK metadata `3` is the native API generation; the validated
 local toolchain is **SDK 4.33.1 / Pebble Tool 5.0.40**.
 
-The launcher name is **Pebble Flight**, UUID
+The launcher and companion-app name is **Jetebble**, UUID
 `e6fc90f6-5f5a-4f34-a18e-76f13a5b2327`. No appstore release is published by
 building, importing, or updating this repository.
 

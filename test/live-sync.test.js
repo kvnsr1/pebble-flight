@@ -123,8 +123,9 @@ h.fire('showConfiguration'); assert.strictEqual(h.requests.length,0);
 h.fire('ready'); assert.strictEqual(h.requests.length,0,'wait for native mode confirmation');
 h.fire('appmessage',{payload:{LIVE_MODE:2}}); assert.strictEqual(h.requests.length,1);
 h.complete(0); assert.strictEqual(h.latest().UI_STATUS,2);
-assert.ok(h.sent.filter(function(m) { return !m.REQUEST_MODE; }).every(function(m) { return m.UI_COUNT===1; }),
+assert.ok(h.sent.filter(function(m) { return !m.REQUEST_MODE; }).every(function(m) { return m.UI_COUNT===1 || m.GLANCE_PLAN; }),
   'settings/ready must not silently switch back to the legacy wire format');
+assert.ok(h.sent.some(function(m) { return m.GLANCE_PLAN; }), 'native sync also updates the launcher through C');
 h.fire('appmessage',{payload:{LIVE_MODE:2}}); assert.strictEqual(h.requests.length,1,'duplicate mode hints only resync');
 
 console.log('Native upgrade bootstrap, credential replacement/races, restart ordering and real entry handshake passed');

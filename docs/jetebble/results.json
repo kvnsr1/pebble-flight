@@ -1,0 +1,35 @@
+{
+  "platform": "emery",
+  "firmware": "v4.33.2",
+  "data": "synthetic AppMessages, no provider requests or phone credential changes",
+  "logos": [
+    "AA/AAL",
+    "DL/DAL",
+    "F9/FFT",
+    "WN/SWA",
+    "UA/UAL"
+  ],
+  "fallback": "BA284",
+  "logo_progress_positions": [
+    0,
+    25,
+    40,
+    45,
+    50,
+    75,
+    100
+  ],
+  "pixel_identical_pages": [
+    "Departure",
+    "Arrival",
+    "Booking"
+  ],
+  "selection_restoration": true,
+  "native_subtitle_scroll": true,
+  "closed_app_next_flight_expiry": true,
+  "limitations": [
+    "Physical companion/watch and authenticated CloudPebble not tested",
+    "No real flight API lookup"
+  ],
+  "emulator_notes": "Restarted stalled local emulator bridge during captures; final marquee captures completed successfully. Earlier expiry capture confirmed WN to AA transition; final empty subtitle expiry unit-tested, not captured after transport timeout."
+}
