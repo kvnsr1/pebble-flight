@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+<path d="M6 70L60 16H76L58 70Z" fill="#fff" stroke="#000" stroke-width="4"/>
+<path d="M6 70L60 16H68L14 70Z" fill="#aaa" stroke="none" stroke-width="0"/>
+<path d="M17 70L71 16H76L67 43L40 70Z" fill="#555" stroke="none" stroke-width="0"/>
+<path d="M44 70L65 49L58 70Z" fill="#000" stroke="none" stroke-width="0"/>
+<path d="M6 70L60 16H76L58 70Z" fill="none" stroke="#000" stroke-width="4"/>
+</svg>
