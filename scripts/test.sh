@@ -13,6 +13,9 @@ cc -DPEBBLE_MOCK_DATA=1 -std=c99 -Wall -Wextra -Werror test/prototype.test.c \
   src/c/prototype/navigation.c src/c/prototype/mock_flights.c \
   src/c/prototype/booking.c src/c/prototype/flight_model.c -o "$TEST_BINARY"
 "$TEST_BINARY"
+cc -std=c99 -Wall -Wextra -Werror test/motion.test.c \
+  src/c/prototype/motion.c -o "$TEST_BINARY"
+"$TEST_BINARY"
 node test/native-view.test.js
 node test/live-sync.test.js
 node test/launcher-glance.test.js

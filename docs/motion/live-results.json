@@ -1,0 +1,18 @@
+{
+  "platform": "emery",
+  "provider_requests": 0,
+  "mode": "real native message path / inert phone companion / synthetic snapshots",
+  "checks": [
+    "live-progress-update: real intermediate frames captured (6)",
+    "Confirmed progress remains still after update",
+    "live-gate-update: real intermediate frames captured (3)",
+    "Gate emphasis expires and the page becomes still",
+    "live-refresh-activity: real intermediate frames captured (4)",
+    "Refresh failure stops activity even if loading bit remains set",
+    "Refresh activity never moves the journey ring",
+    "Native action menu and Aircraft return preserve the main detail",
+    "Missing progress is static and never synthesized",
+    "Cancellation settles without celebratory motion",
+    "Removal during motion returns safely to the empty list"
+  ]
+}

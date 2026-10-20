@@ -1,0 +1,22 @@
+{
+  "base_main": "fba3b9bbfaf761bee3ad7d5175103f211ff2d525",
+  "sdk": "4.33.1",
+  "tool": "5.0.40",
+  "platform": "emery",
+  "automated_suites": 10,
+  "offline_emulator_checks": 28,
+  "live_path_emulator_checks": 11,
+  "builds": [
+    "offline motion prototype",
+    "inert-companion live-path test",
+    "normal live integration"
+  ],
+  "ram_footprint_bytes": {
+    "offline_demo": 17801,
+    "normal_live": 44869
+  },
+  "resource_bytes": 16487,
+  "provider_requests": 0,
+  "physical_watch_tested": false,
+  "known_build_warning": "Existing SDK linker LOAD segment RWX warning"
+}
