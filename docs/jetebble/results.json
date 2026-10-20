@@ -31,5 +31,9 @@
     "Physical companion/watch and authenticated CloudPebble not tested",
     "No real flight API lookup"
   ],
-  "emulator_notes": "Restarted stalled local emulator bridge during captures; final marquee captures completed successfully. Earlier expiry capture confirmed WN to AA transition; final empty subtitle expiry unit-tested, not captured after transport timeout."
+  "emulator_notes": "Restarted stalled local emulator/bridge during an earlier long idle capture. Final short captures verified marquee, final no-upcoming expiry and empty setup restoration successfully.",
+  "closed_app_final_empty_expiry": true,
+  "emulator_restored_to_empty_settings": true,
+  "mock_build": "passed, 10761 bytes RAM / 120311 bytes free heap",
+  "settings_site_deployment": "Verified hosted Jetebble heading/title after GitHub Pages deployed main"
 }

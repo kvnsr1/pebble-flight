@@ -65,6 +65,9 @@ metadata caching and physical-watch migration are separate checks below.
 Local SDK 4.33.1 / Pebble Tool 5.0.40 compiled the native live build successfully:
 **38,089 bytes RAM**, **92,983 bytes free heap**, **6,970 bytes resources**. The only
 linker warning is the existing SDK ELF LOAD-segment RWX warning.
+The existing mock mode also compiled successfully in an isolated source copy:
+**10,761 bytes RAM**, **120,311 bytes free heap**, with the same resource pack.
+The downloadable/default build remains live mode.
 
 All nine automated suites pass, including chronology/expiry, skipped terminal
 flights, empty state, airport-local times, missing data, safe wire lengths,
@@ -85,17 +88,22 @@ configuring a provider key or making paid/live flight lookups:
   movement through flight number, route, status and airport-local departure time,
   followed by a rewind. The firmware plays this once per selection. Earlier
   captures taken after the animation had finished showed only its resting ellipsis.
+- A final short native test verified expiry to **No upcoming flights**, then
+  reopened the real companion-backed empty setup and restored **Add flights in
+  phone settings**. The emulator contains no synthetic saved flights or credentials.
+- GitHub Pages successfully deployed `main`; an HTTP fetch verified both the
+  hosted settings page title and heading say **Jetebble**.
 
 Evidence: [native preview](jetebble/preview.png),
 [launcher animation](jetebble/launcher-scroll.gif),
 [all airline overviews](jetebble/airline-overviews.png),
 [next-flight transition](jetebble/launcher-next-flight.png),
+[final empty state](jetebble/launcher-no-upcoming.png),
 [machine-readable results](jetebble/results.json).
 
 The local emulator/bridge stalled during an earlier long idle capture and was
-restarted without clearing its saved state. The final short marquee captures
-completed successfully. The last empty-state expiry is unit-tested; its timed
-native screenshot was not captured after that transport timeout.
+restarted without clearing its saved state. The final short marquee and empty
+expiry captures completed successfully.
 
 Emulator screenshots and additional animation evidence are in `docs/jetebble/`.
 Physical phone/watch installation, CloudPebble's authenticated workflow, API
