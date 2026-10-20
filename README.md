@@ -1,10 +1,12 @@
 # Jetebble
 
-**Overview mockup — unapproved, local branch `codex/overview-airline-mockup`.**
-This branch centers the airline logo inside the circle, reduces the percentage,
-aligns the supplied white/black PDC aircraft with the progress stroke and adds all 17 supplied airline
-logos. `main` remains unchanged. See [the mockup and offline preview](docs/OVERVIEW_MOCKUP.md).
-The release notes below describe the existing production version.
+**Version 0.7.5** adopts the reviewed Overview layout: a smaller progress percentage,
+the airline logo above the flight number, and the supplied white/black PDC plane
+centered on the progress circle. In-flight flights use the 80×80 source with motion
+lines; other known-progress states use the 50×50 source. Both fit the existing
+25px marker footprint. All 17 supplied airline logos are included.
+See [the layout, validation and optional offline preview](docs/OVERVIEW_MOCKUP.md).
+Live mode remains the default; the other pages, controls and saved settings are unchanged.
 
 **Version 0.7.4** renames Pebble Flight to **Jetebble** and uses the approved green native design as its
 current interface. It runs on **Pebble Time 2 / emery (200×228)** using the

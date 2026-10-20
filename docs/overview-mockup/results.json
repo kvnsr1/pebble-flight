@@ -51,8 +51,8 @@
     "Back restores selection and scroll"
   ],
   "automated_suites": 9,
-  "main_unchanged": "0baeee3",
-  "git_pushes": 0,
+  "main_at_mockup_validation": "0baeee3",
+  "git_pushes_at_mockup_validation": 0,
   "preview_uuid": "8a2dccb9-2ff6-4439-9aeb-0876a23c833d",
   "limitations": [
     "No physical-watch test",

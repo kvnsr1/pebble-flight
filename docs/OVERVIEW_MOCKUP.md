@@ -1,7 +1,9 @@
-# Overview layout mockup
+# Jetebble 0.7.5 — Overview layout
 
-Review branch: `codex/overview-airline-mockup`. No changes have been pushed or
-promoted to `main`; the existing 0.7.4 release remains at `0baeee3`.
+Approved from review branch `codex/overview-airline-mockup` for `main` as version
+**0.7.5**. The previous 0.7.4 version is retained in Git at `0baeee3`. The normal
+build keeps live mode enabled and the existing Jetebble name/UUID. The separate
+offline mockup below remains available for repeatable design checks.
 
 ## Layout
 
@@ -83,6 +85,10 @@ Pebble Tool **5.0.40 / SDK 4.33.1**, metadata **3**, **emery**. The live build u
 **38,697 bytes RAM / 92,375 bytes free heap**; the preview uses **13,525 / 117,547**.
 Both use **16,487 bytes resources**. The only linker diagnostic is the existing
 SDK ELF LOAD-segment RWX warning. All **nine automated suites** pass.
+
+The approved **0.7.5** promotion was clean-built in live mode and the nine suites
+were rerun successfully. The PBW metadata was checked for version 0.7.5, Jetebble's
+existing UUID/name and the Emery target; the build source has mock mode disabled.
 
 Actual local Emery emulator screenshots cover all 17 airlines, the neutral
 fallback, upcoming/boarding/airborne/landed/delayed/canceled states and unknown
