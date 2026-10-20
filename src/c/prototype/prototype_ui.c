@@ -200,7 +200,8 @@ static const char *time_heading(const FlightTime *time, bool departure) {
 static void draw_overview(GContext *ctx, const Flight *flight) {
   label(ctx,"OVERVIEW",10,1,120);
   text(ctx,source_label(),145,1,40,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentRight);
-  GRect ring=GRect(49,29,98,98);
+  // Keep the 25px plane clear of the flight number at both arc endpoints.
+  GRect ring=GRect(40,24,116,116);
   int start=DEG_TO_TRIGANGLE(225);
   int sweep=DEG_TO_TRIGANGLE(270);
   int progress=flight_progress(flight);

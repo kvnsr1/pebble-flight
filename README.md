@@ -1,6 +1,6 @@
 # Pebble Flight
 
-**Version 0.7.1** uses the approved green native design as Pebble Flight's
+**Version 0.7.2** uses the approved green native design as Pebble Flight's
 current interface. It runs on **Pebble Time 2 / emery (200×228)** using the
 **Pebble C SDK**, with PebbleKit JS providing flight data and phone settings.
 
@@ -8,6 +8,9 @@ The default build uses the existing **live FlightAware integration**. Mock mode
 is off. The original app UUID is restored so this builds as an update to Pebble
 Flight, with the same phone-storage keys for saved flights, API key, booking
 codes, seat positions and cached data.
+
+Version 0.7.2 enlarges the Overview progress circle from 98 to 116 px so the
+airplane clears the flight number. Other screen content and behavior are unchanged.
 
 Version 0.7.1 fixes native-data initialization after upgrading from the old UI,
 immediately retries after saving a different AeroAPI key, and preserves snapshot
