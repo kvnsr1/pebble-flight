@@ -33,15 +33,26 @@ canceled-flight presentation and other pages retain their layout.
 
 ## Validation
 
-- All nine automated suites pass. The companion integration suite now covers an
+- All ten automated suites pass, including the motion suite from the newer
+  `e824ffa` update, which is preserved. The companion integration suite covers an
   Oct 20 request for Oct 22, successful synthetic data delivery, empty future
   results, invalid/out-of-window dates, the historical boundary, space-separated
   flight numbers, cooldown behavior, and an evening departure whose UTC date is
   the following day.
 - Fresh native C SDK 3 / Emery build with local SDK 4.33.1 and Pebble Tool 5.0.40.
-  Resources: 16,487 bytes; RAM footprint: 38,681 bytes; free heap: 92,391 bytes.
+  Resources: 16,487 bytes; RAM footprint: 44,869 bytes; free heap: 86,203 bytes.
   Only the existing SDK ELF LOAD-segment RWX linker warning was reported.
 - Default live mode, Jetebble name and existing app UUID remain in place.
+- Offline Emery screenshots and physical-button events cover all 18 airline
+  examples with the preserved motion code. All 17 known-progress/canceled
+  Overviews, All Flights, Departure, Arrival, Booking and restored list selection
+  match the earlier native screenshots pixel for pixel. Only the unknown-progress
+  label area changes. [Native comparison](future-flight-fix/preview.png) and
+  [machine-readable checks](future-flight-fix/results.json) use synthetic data,
+  not WN3156's actual itinerary or provider response.
+- Direct synthetic-message verification in the local live-mode emulator was
+  unavailable: test messages were not acknowledged. The request correction is
+  verified by the companion integration harness, not by an authenticated API call.
 
 All automated API responses are synthetic. No account credential was accessed
 and WN3156's actual provider response has not been tested. CloudPebble and

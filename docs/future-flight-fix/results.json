@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-20",
+  "version": "0.7.6",
+  "platform": "emery 200x228",
+  "suite_count": 10,
+  "upstream_preserved": "e824ffa",
+  "live_api_requests": 0,
+  "native_screen_mode": "Offline mock fixtures, physical button events; not actual WN3156 flight data",
+  "unchanged_pixel_comparisons": [
+    "Southwest",
+    "American",
+    "Delta",
+    "United",
+    "Frontier",
+    "Alaska",
+    "Air_China",
+    "Cathay_Pacific",
+    "JSX",
+    "LATAM",
+    "Hawaiian",
+    "Korean_Air",
+    "Lufthansa",
+    "Air_France",
+    "KLM",
+    "Turkish",
+    "China_Eastern",
+    "all-flights",
+    "departure",
+    "arrival",
+    "booking",
+    "list-restored"
+  ],
+  "changed_regions": {
+    "Fallback": [
+      71,
+      34,
+      124,
+      62
+    ]
+  },
+  "limitations": [
+    "No authenticated provider request",
+    "No physical-watch or CloudPebble session",
+    "Live-mode emulator AppMessage inputs were not acknowledged"
+  ],
+  "build": {
+    "resources": 16487,
+    "ram": 44869,
+    "heap": 86203
+  }
+}
