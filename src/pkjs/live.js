@@ -301,12 +301,27 @@ function apiError(status) {
   return 'Flight service error (' + status + ')';
 }
 
-function dateWindow(date) {
-  var start = new Date(date + 'T00:00:00Z');
-  var end = new Date(date + 'T23:59:59Z');
-  start.setUTCDate(start.getUTCDate() - 1);
-  end.setUTCDate(end.getUTCDate() + 1);
-  return {start: start.toISOString(), end: end.toISOString()};
+function dateWindow(date, now) {
+  var day = 24 * 60 * 60 * 1000;
+  var midnight = Date.parse(date + 'T00:00:00Z');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !isFinite(midnight) ||
+      new Date(midnight).toISOString().slice(0, 10) !== date) {
+    return {error: 'Invalid departure date; check phone settings'};
+  }
+  // The saved date is airport-local, but its timezone is unknown until lookup.
+  // Pad in UTC, then apply AeroAPI /flights limits (-10 days / +2 days).
+  // A one-minute margin avoids rejecting an edge request for clock skew.
+  var earliest = now - 10 * day + 60000;
+  var latest = now + 2 * day - 60000;
+  var start = Math.max(midnight - day, earliest);
+  var end = Math.min(midnight + 2 * day, latest);
+  if (start >= end) {
+    return {error: midnight > now ?
+      'Flight date is outside the live lookup window; retry closer to departure' :
+      'Flight date is too old for live lookup; check phone settings'};
+  }
+  return {start: new Date(start).toISOString(), end: new Date(end).toISOString(),
+    futureLimited: midnight + 2 * day > latest};
 }
 
 function refresh(force) {
@@ -342,6 +357,8 @@ function refresh(force) {
   if ((force || needsNativeData) && lastAttempt && now - lastAttempt < 30000) {
     showCurrent(config); return;
   }
+  var window = dateWindow(selected.flightDate, now);
+  if (window.error) { sendError(window.error); return; }
   send({IS_LOADING: 1, ERROR_MESSAGE: ''});
   var job = {};
   requests[selectedKey] = job;
@@ -350,10 +367,10 @@ function refresh(force) {
   if (nativeUI) { state.nativeRequestedAt = now; }
   states[selectedKey] = state;
   writeJson(STATE_KEY, states);
-  var window = dateWindow(selected.flightDate);
-  var url = API_ROOT + '/flights/' + encodeURIComponent(selected.flightNumber) +
+  var ident = selected.flightNumber.replace(/\s+/g, '');
+  var url = API_ROOT + '/flights/' + encodeURIComponent(ident) +
     '?start=' + encodeURIComponent(window.start) +
-    '&end=' + encodeURIComponent(window.end) + '&max_pages=1';
+    '&end=' + encodeURIComponent(window.end) + '&ident_type=designator&max_pages=1';
   var request = new XMLHttpRequest();
   request.open('GET', url, true);
   request.setRequestHeader('Accept', 'application/json');
@@ -380,7 +397,9 @@ function refresh(force) {
       var body = JSON.parse(request.responseText);
       var flight = flightTools.chooseFlight(body.flights || [], selected.flightDate);
       if (!flight) {
-        sendIfStillSelected('No ' + selected.flightNumber + ' flight found on ' + selected.flightDate);
+        sendIfStillSelected(window.futureLimited ?
+          'No matching flight yet for ' + selected.flightDate + '; retry closer to departure' :
+          'No ' + selected.flightNumber + ' flight found on ' + selected.flightDate);
         return;
       }
       var message = flightTools.toMessage(flight);

@@ -1,5 +1,9 @@
 # Jetebble
 
+**Version 0.7.6** fixes future-flight lookups that returned HTTP 400 because the
+date range exceeded AeroAPI's live window. Overview now shows **NA** inside the
+circle when progress is unknown. See [the fix and validation](docs/LIVE_LOOKUP_FIX.md).
+
 **Version 0.7.5** adopts the reviewed Overview layout: a smaller progress percentage,
 the airline logo above the flight number, and the supplied white/black PDC plane
 centered on the progress circle. In-flight flights use the 80×80 source with motion

@@ -302,9 +302,12 @@ static void draw_overview(GContext *ctx, const Flight *flight) {
     }
   } else {
     if (show_labels) {
-      if (progress==-1) { status_icon(ctx,FLIGHT_CANCELED,GPoint(98,39),GColorWhite); }
-      text(ctx,progress==-1?"NO JOURNEY":"PROGRESS",56,progress==-1?44:29,84,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentCenter);
-      if (progress==-2) { text(ctx,"UNKNOWN",56,43,84,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentCenter); }
+      if (progress==-1) {
+        status_icon(ctx,FLIGHT_CANCELED,GPoint(98,39),GColorWhite);
+        text(ctx,"NO JOURNEY",56,44,84,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentCenter);
+      } else {
+        text(ctx,"NA",56,44,84,24,FONT_KEY_GOTHIC_18_BOLD,GColorWhite,GTextAlignmentCenter);
+      }
     }
   }
   if (show_labels && !airline_icon_draw(ctx,flight->number,GPoint(86,66))) {
