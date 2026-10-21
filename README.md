@@ -1,5 +1,10 @@
 # Jetebble
 
+**Unpublished motion review:** local branch `codex/stretch-flight-motion` adds
+stretch-and-scale flight opening and a lighter card-focus effect. See
+[the native preview, CloudPebble ZIP instructions and validation](docs/STRETCH_MOTION.md).
+This work has not been pushed to GitHub or deployed to the hosted settings.
+
 **Version 0.7.8** adds up to **five saved flights**, a global **24H / 12H**
 setting, and larger All Flights cards with an airline-logo/flight-number eyebrow,
 bold route and date/status row. The logo and number move together into Overview

@@ -9,6 +9,8 @@
 #include "live_data.h"
 #include "motion.h"
 #include "startup.h"
+#include "stretch_icon.h"
+#include "motion_text.h"
 
 static Window *s_window;
 static Layer *s_canvas;
@@ -23,6 +25,8 @@ static int s_move_p = MOTION_UNIT, s_progress_p = MOTION_UNIT;
 static int s_progress_from, s_progress_to;
 static unsigned s_emphasis, s_activity_frame;
 static bool s_drawing_old, s_before_aircraft, s_visible;
+static StretchIcon *s_header_icons[2];
+static MotionText s_header_numbers[2];
 enum { CH_STATUS = 1, CH_DEP_TIME = 2, CH_ARR_TIME = 4, CH_DEP_TERMINAL = 8,
        CH_GATE = 16, CH_ARR_TERMINAL = 32, CH_BAGGAGE = 64, CH_BOOKING = 128, CH_SEAT = 256 };
 static void motion_stop(void);
@@ -100,6 +104,25 @@ static void fill(GContext *ctx, GRect rect, GColor color) {
   graphics_context_set_fill_color(ctx, color);
   graphics_fill_rect(ctx, rect, 0, GCornerNone);
 }
+static void header_resources_clear(void) {
+  for(unsigned i=0;i<2;i++) {
+    stretch_icon_destroy(s_header_icons[i]);s_header_icons[i]=NULL;
+    motion_text_clear(&s_header_numbers[i]);
+  }
+}
+static void header_prepare(unsigned slot,size_t index) {
+  const Flight *flight=data_at(index);if(!flight)return;
+  if(PEBBLE_STRETCH_MOTION)s_header_icons[slot]=stretch_icon_create(airline_icon_clone(flight->number));
+  motion_text_prepare(&s_header_numbers[slot],flight->number);
+}
+static void animated_header(GContext *ctx,const Flight *flight,unsigned slot,
+                           GRect icon,GPoint number,int scale,int progress,bool reverse) {
+  if(!stretch_icon_draw(s_header_icons[slot],ctx,icon,progress,reverse) &&
+     !airline_icon_draw(ctx,flight->number,icon.origin)) {
+    pebble_plane_draw(ctx,GPoint(icon.origin.x+12,icon.origin.y+12));
+  }
+  motion_text_draw(&s_header_numbers[slot],ctx,number,scale);
+}
 static GColor status_color(const Flight *flight) {
   if (flight->status == FLIGHT_CANCELED || flight->status == FLIGHT_UNKNOWN || flight->status == FLIGHT_DIVERTED) { return GColorWhite; }
   if (flight->status == FLIGHT_DELAYED) { return GColorYellow; }
@@ -155,12 +178,12 @@ static void page_indicator(GContext *ctx) {
     graphics_draw_line(ctx, GPoint(194,133),GPoint(197,130));
   }
 }
-static void draw_list(GContext *ctx) {
-  fill(ctx, GRect(0,0,200,228), GColorBlack);
-  text(ctx, "All flights",10,0,148,32,FONT_KEY_GOTHIC_28_BOLD,GColorWhite,GTextAlignmentLeft);
+static void draw_list_heading(GContext *ctx) {
   char count[16];
-  snprintf(count,sizeof(count),"%d / %d",s_nav.empty?0:(int)s_nav.selected+1,
-           s_nav.empty?0:(int)data_count());
+  snprintf(count,sizeof(count),"%d / %d",s_nav.empty?0:(int)s_nav.selected+1,s_nav.empty?0:(int)data_count());
+  // Fixed chrome masks the scrolling cards.
+  fill(ctx,GRect(0,0,200,FLIGHT_LIST_Y),GColorBlack);
+  text(ctx,"All flights",10,0,148,32,FONT_KEY_GOTHIC_28_BOLD,GColorWhite,GTextAlignmentLeft);
   text(ctx,count,151,10,39,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentRight);
   text(ctx,
 #if PEBBLE_MOCK_DATA
@@ -169,6 +192,29 @@ static void draw_list(GContext *ctx) {
        "YOUR FLIGHTS",
 #endif
        10,30,178,18,FONT_KEY_GOTHIC_14,accent(),GTextAlignmentLeft);
+}
+static void draw_list_chrome(GContext *ctx) {
+  draw_list_heading(ctx);
+  fill(ctx,GRect(0,203,200,25),GColorBlack);
+  if (data_count()>VISIBLE_FLIGHTS) {
+    fill(ctx,GRect(195,52,2,150),GColorDarkGray);
+    int thumb_h=150*VISIBLE_FLIGHTS/(int)data_count();
+    int thumb_y=52+(150-thumb_h)*(int)s_nav.top/((int)data_count()-VISIBLE_FLIGHTS);
+    fill(ctx,GRect(194,thumb_y,4,thumb_h),GColorWhite);
+  }
+  const char *footer="Hold SELECT: empty demo";
+#if !PEBBLE_MOCK_DATA
+  const NativeFlight *metadata=live_metadata_at(s_nav.selected);
+  footer=!connection_service_peek_pebble_app_connection()?"Offline / saved data":
+    live_global_error()[0]?"Phone unavailable / saved data":
+    metadata && metadata->loading?"Updating flight...":
+    metadata && metadata->text[TX_ERROR][0]?"Saved data / SELECT for details":"Hold SELECT: actions";
+#endif
+  text(ctx,footer,5,209,190,18,FONT_KEY_GOTHIC_14,GColorLightGray,GTextAlignmentCenter);
+}
+static void draw_list(GContext *ctx) {
+  fill(ctx, GRect(0,0,200,228), GColorBlack);
+  draw_list_heading(ctx);
   if (s_nav.empty) {
     int lift = s_move == MOVE_NOTE ? (s_move_p < 500 ? motion_mix(0,2,s_move_p*2) : motion_mix(2,0,(s_move_p-500)*2)) : 0;
     pebble_plane_draw(ctx,GPoint(98,84-lift));
@@ -199,7 +245,7 @@ static void draw_list(GContext *ctx) {
   int selection_y = FLIGHT_LIST_Y + (int)(s_nav.selected - s_nav.top) * FLIGHT_ROW_HEIGHT;
   bool selection_move = s_move == MOVE_SELECTION && !s_drawing_old;
   if (selection_move) {
-    int p = motion_ease(s_move_p);
+    int p = motion_smooth(s_move_p);
     row_shift = motion_mix(((int)s_nav.top - (int)s_before.top) * FLIGHT_ROW_HEIGHT, 0, p);
     selection_y = motion_mix(FLIGHT_LIST_Y + ((int)s_before.selected - (int)s_before.top) * FLIGHT_ROW_HEIGHT,
                             selection_y, p);
@@ -208,12 +254,16 @@ static void draw_list(GContext *ctx) {
   for (int row=-1;row<=VISIBLE_FLIGHTS;row++) {
     int index=(int)s_nav.top+row;
     if (index<0 || !data_at(index)) { continue; }
+    int expand=PEBBLE_STRETCH_MOTION && selection_move && index==(int)s_nav.selected?2*motion_pulse(motion_phase(s_move_p,MOTION_FOCUS_DELAY,1000))/1000:0;
     graphics_context_set_fill_color(ctx,background());
-    graphics_fill_rect(ctx,GRect(5,FLIGHT_LIST_Y+row*FLIGHT_ROW_HEIGHT+row_shift,184,FLIGHT_CARD_HEIGHT),6,GCornersAll);
+    graphics_fill_rect(ctx,GRect(5-expand,FLIGHT_LIST_Y+row*FLIGHT_ROW_HEIGHT+row_shift,184+expand*2,FLIGHT_CARD_HEIGHT),6,GCornersAll);
   }
   graphics_context_set_stroke_color(ctx,GColorWhite);
   graphics_context_set_stroke_width(ctx,2);
-  graphics_draw_round_rect(ctx,GRect(5,selection_y,184,FLIGHT_CARD_HEIGHT),6);
+  int expand=PEBBLE_STRETCH_MOTION && selection_move?2*motion_pulse(s_move_p)/1000:0;
+  int frame_y=PEBBLE_STRETCH_MOTION && selection_move?FLIGHT_LIST_Y+(int)(s_nav.selected-s_nav.top)*FLIGHT_ROW_HEIGHT+row_shift:selection_y;
+  if(PEBBLE_STRETCH_MOTION && selection_move && s_move_p<200)graphics_context_set_stroke_color(ctx,GColorMayGreen);
+  graphics_draw_round_rect(ctx,GRect(5-expand,frame_y,184+expand*2,FLIGHT_CARD_HEIGHT),6);
   fill(ctx,GRect(8,selection_y+10,3,FLIGHT_CARD_HEIGHT-20),accent());
   for (int row=-1; row<=VISIBLE_FLIGHTS; row++) {
     if ((int)s_nav.top + row < 0) { continue; }
@@ -223,7 +273,8 @@ static void draw_list(GContext *ctx) {
     int y=FLIGHT_LIST_Y+row*FLIGHT_ROW_HEIGHT+row_shift;
     bool selected=index==s_nav.selected;
     bool hero = (s_move == MOVE_OPEN || (s_move == MOVE_CLOSE && s_before.page == PAGE_OVERVIEW && !s_before.note)) && selected;
-    if (!hero) {
+    bool focus=PEBBLE_STRETCH_MOTION && selection_move && (selected || index==s_before.selected);
+    if (!hero && !focus) {
       if (!airline_icon_draw(ctx,flight->number,GPoint(12,y+3))) { pebble_plane_draw(ctx,GPoint(24,y+15)); }
       text(ctx,flight->number,44,y+2,130,25,FONT_KEY_GOTHIC_18_BOLD,GColorWhite,GTextAlignmentLeft);
     }
@@ -251,37 +302,11 @@ static void draw_list(GContext *ctx) {
     if (selected) {
       graphics_context_set_stroke_color(ctx,GColorWhite);
       graphics_context_set_stroke_width(ctx,2);
-      graphics_draw_line(ctx,GPoint(179,selection_y+8),GPoint(183,selection_y+12));
-      graphics_draw_line(ctx,GPoint(183,selection_y+12),GPoint(179,selection_y+16));
+      graphics_draw_line(ctx,GPoint(179,frame_y+8),GPoint(183,frame_y+12));
+      graphics_draw_line(ctx,GPoint(183,frame_y+12),GPoint(179,frame_y+16));
     }
   }
-  // Fixed chrome masks the scrolling cards.
-  fill(ctx,GRect(0,0,200,FLIGHT_LIST_Y),GColorBlack);
-  text(ctx,"All flights",10,0,148,32,FONT_KEY_GOTHIC_28_BOLD,GColorWhite,GTextAlignmentLeft);
-  text(ctx,count,151,10,39,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentRight);
-  text(ctx,
-#if PEBBLE_MOCK_DATA
-       "MOCK  /  OCT 2026",
-#else
-       "YOUR FLIGHTS",
-#endif
-       10,30,178,18,FONT_KEY_GOTHIC_14,accent(),GTextAlignmentLeft);
-  fill(ctx,GRect(0,203,200,25),GColorBlack);
-  if (data_count()>VISIBLE_FLIGHTS) {
-    fill(ctx,GRect(195,52,2,150),GColorDarkGray);
-    int thumb_h=150*VISIBLE_FLIGHTS/(int)data_count();
-    int thumb_y=52+(150-thumb_h)*(int)s_nav.top/((int)data_count()-VISIBLE_FLIGHTS);
-    fill(ctx,GRect(194,thumb_y,4,thumb_h),GColorWhite);
-  }
-  const char *footer="Hold SELECT: empty demo";
-#if !PEBBLE_MOCK_DATA
-  const NativeFlight *metadata=live_metadata_at(s_nav.selected);
-  footer=!connection_service_peek_pebble_app_connection()?"Offline / saved data":
-    live_global_error()[0]?"Phone unavailable / saved data":
-    metadata && metadata->loading?"Updating flight...":
-    metadata && metadata->text[TX_ERROR][0]?"Saved data / SELECT for details":"Hold SELECT: actions";
-#endif
-  text(ctx,footer,5,209,190,18,FONT_KEY_GOTHIC_14,GColorLightGray,GTextAlignmentCenter);
+  draw_list_chrome(ctx);
 }
 static const char *overview_time(const FlightTime *time) {
   return time->kind==TIME_ACTUAL || time->kind==TIME_ESTIMATED ? time->current : time->scheduled;
@@ -302,7 +327,7 @@ static void draw_overview(GContext *ctx, const Flight *flight) {
   int sweep=DEG_TO_TRIGANGLE(250);
   int progress=flight_progress(flight);
   bool hero = s_move == MOVE_OPEN || (s_move == MOVE_CLOSE && s_before.page == PAGE_OVERVIEW && !s_before.note);
-  bool show_labels = !hero || (s_move == MOVE_OPEN && s_move_p >= 600);
+  bool show_labels = !hero || (s_move == MOVE_OPEN && s_move_p >= 820);
   int drawn_progress = progress;
   if (s_progress_anim && !s_drawing_old && progress >= 0) {
     drawn_progress = motion_mix(s_progress_from, s_progress_to, motion_ease(s_progress_p));
@@ -315,12 +340,12 @@ static void draw_overview(GContext *ctx, const Flight *flight) {
     graphics_draw_arc(ctx,track,GOvalScaleModeFitCircle,start,start+sweep*drawn_progress/100);
   }
   if (progress>=0) {
-    GPoint marker=gpoint_from_polar(track,GOvalScaleModeFitCircle,start+sweep*drawn_progress/100);
-    if (s_move == MOVE_OPEN && !s_drawing_old) {
-      int p = s_move_p * MOTION_FLIGHT_MS / MOTION_PLANE_MS;
-      if (p < MOTION_UNIT) { marker.y -= p < 500 ? motion_mix(0,2,p*2) : motion_mix(2,0,(p-500)*2); }
+    // Hand off the destination marker once the shared header has settled. An
+    // upcoming flight opened from the lower card crosses this part of the ring.
+    if(!hero) {
+      GPoint marker=gpoint_from_polar(track,GOvalScaleModeFitCircle,start+sweep*drawn_progress/100);
+      pebble_plane_progress_draw(ctx,marker,flight->status == FLIGHT_IN_FLIGHT);
     }
-    pebble_plane_progress_draw(ctx,marker,flight->status == FLIGHT_IN_FLIGHT);
     char percent[16];
     snprintf(percent,sizeof(percent),"%d%%",progress);
     if (show_labels) {
@@ -348,6 +373,7 @@ static void draw_overview(GContext *ctx, const Flight *flight) {
     char status[40];
     text(ctx,status_text(flight,status,sizeof(status)),35,123,145,25,FONT_KEY_GOTHIC_18_BOLD,status_color(flight),GTextAlignmentCenter);
   }
+  if(hero && s_move==MOVE_OPEN && s_move_p<600) { return; }
   label(ctx,time_heading(&flight->departure.time,true),10,151,90);
   label(ctx,time_heading(&flight->arrival.time,false),106,151,84);
   text(ctx,flight->departure.code,10,163,86,34,FONT_KEY_GOTHIC_28_BOLD,GColorWhite,GTextAlignmentLeft);
@@ -534,6 +560,20 @@ static void indicators_update(Layer *layer, GContext *ctx) {
   }
 }
 static void hero_update(Layer *layer, GContext *ctx) {
+  if(PEBBLE_STRETCH_MOTION && s_move==MOVE_SELECTION) {
+    int shift=motion_mix(((int)s_nav.top-(int)s_before.top)*FLIGHT_ROW_HEIGHT,0,motion_smooth(s_move_p));
+    for(unsigned slot=0;slot<2;slot++) {
+      size_t index=slot?s_before.selected:s_nav.selected;
+      const Flight *flight=data_at(index);if(!flight)continue;
+      int y=FLIGHT_LIST_Y+((int)index-(int)s_nav.top)*FLIGHT_ROW_HEIGHT+shift;
+      int p=motion_phase(s_move_p,slot?0:MOTION_FOCUS_DELAY,slot?700:1000),pulse=motion_pulse(p);
+      int size=25+(slot?-3:MOTION_FOCUS_ICON_GROW)*pulse/1000,lift=(slot?1:-2)*pulse/1000;
+      animated_header(ctx,flight,slot,GRect(12-(size-25)/2,y+3+lift-(size-25)/2,size,size),
+        GPoint(44,y+2+lift),1000+(slot?-50:MOTION_FOCUS_TEXT_GROW)*pulse/1000,p,s_nav.selected<s_before.selected);
+    }
+    draw_list_chrome(ctx);
+    return;
+  }
   bool opening = s_move == MOVE_OPEN;
   if (!opening && !(s_move == MOVE_CLOSE && s_before.page == PAGE_OVERVIEW && !s_before.note)) { return; }
   const Flight *flight = data_at(s_nav.selected);
@@ -543,11 +583,8 @@ static void hero_update(Layer *layer, GContext *ctx) {
   GSize size = graphics_text_layout_get_content_size(flight->number,font(FONT_KEY_GOTHIC_18_BOLD),
     GRect(0,0,190,25),GTextOverflowModeTrailingEllipsis,GTextAlignmentLeft);
   FlightHeaderPosition position=motion_flight_header(row_y,size.w,p);
-  if (!airline_icon_draw(ctx,flight->number,GPoint(position.logo_x,position.logo_y))) {
-    pebble_plane_draw(ctx,GPoint(position.logo_x+12,position.logo_y+12));
-  }
-  text(ctx,flight->number,position.number_x,position.number_y,150,25,
-       FONT_KEY_GOTHIC_18_BOLD,GColorWhite,GTextAlignmentLeft);
+  animated_header(ctx,flight,0,GRect(position.logo_x,position.logo_y,position.logo_size,position.logo_size),
+    GPoint(position.number_x,position.number_y),position.number_scale,p,!opening);
 }
 static void top_layer(Layer *layer) {
   layer_remove_from_parent(layer);
@@ -567,7 +604,7 @@ static void motion_layout(void) {
     clip_scene(s_out_clip,s_outgoing,full,0,-direction*(travel>228?228:travel));
     clip_scene(s_in_clip,s_canvas,full,0,direction*(228-travel));
   } else if (s_move == MOVE_OPEN || s_move == MOVE_CLOSE) {
-    int p = motion_ease(s_move == MOVE_OPEN?s_move_p:MOTION_UNIT-s_move_p);
+    int p = motion_smooth(s_move == MOVE_OPEN?s_move_p:MOTION_UNIT-s_move_p);
     int row_y = FLIGHT_LIST_Y+((int)s_nav.selected-(int)s_nav.top)*FLIGHT_ROW_HEIGHT;
     GRect rect = GRect(motion_mix(5,0,p),motion_mix(row_y,0,p),motion_mix(184,200,p),motion_mix(FLIGHT_CARD_HEIGHT,228,p));
     clip_scene(s_move == MOVE_OPEN?s_in_clip:s_out_clip,
@@ -588,12 +625,13 @@ static void motion_stopped(Animation *animation, bool finished, void *context) {
   s_move_anim = NULL;
   s_move = MOVE_NONE;
   s_move_p = MOTION_UNIT;
+  header_resources_clear();
   if (s_canvas) {
     motion_layout();
     layer_set_hidden(s_out_clip,true);
   }
   animation_destroy(animation);
-  APP_LOG(APP_LOG_LEVEL_DEBUG,"Motion settled%s",finished?"":" / interrupted");
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"Motion settled%s / heap %u",finished?"":" / interrupted",(unsigned)heap_bytes_free());
 }
 static void motion_update(Animation *animation, AnimationProgress progress) {
   s_move_p = (int)((int64_t)progress*MOTION_UNIT/ANIMATION_NORMALIZED_MAX);
@@ -602,6 +640,7 @@ static void motion_update(Animation *animation, AnimationProgress progress) {
 static const AnimationImplementation s_move_impl = { .update = motion_update };
 static void motion_stop(void) {
   if (s_move_anim) { animation_unschedule(s_move_anim); }
+  header_resources_clear();
 }
 static void motion_start(PrototypeNavigation before, bool before_aircraft) {
   motion_stop();
@@ -613,6 +652,11 @@ static void motion_start(PrototypeNavigation before, bool before_aircraft) {
   else if (before.note != s_nav.note || before.empty != s_nav.empty || before_aircraft != aircraft_showing()) { s_move = MOVE_NOTE; }
   else if (before.selected != s_nav.selected || before.top != s_nav.top) { s_move = MOVE_SELECTION; }
   else { return; }
+  if(s_move==MOVE_OPEN || (s_move==MOVE_CLOSE && before.page==PAGE_OVERVIEW && !before.note)) {
+    header_prepare(0,s_nav.selected);
+  } else if(s_move==MOVE_SELECTION) {
+    header_prepare(0,s_nav.selected);header_prepare(1,before.selected);
+  }
   unsigned duration = s_move == MOVE_SELECTION ? MOTION_SELECTION_MS : s_move == MOVE_PAGE ? MOTION_PAGE_MS :
                       s_move == MOVE_NOTE ? MOTION_NOTE_MS : MOTION_FLIGHT_MS;
   s_move_p = 0;
@@ -623,7 +667,7 @@ static void motion_start(PrototypeNavigation before, bool before_aircraft) {
   layer_set_hidden(s_out_clip,s_move == MOVE_SELECTION);
   layer_mark_dirty(s_outgoing);
   s_move_anim = animation_create();
-  if (!s_move_anim) { s_move = MOVE_NONE; s_move_p = MOTION_UNIT; layer_set_hidden(s_out_clip,true); motion_layout(); return; }
+  if (!s_move_anim) { header_resources_clear(); s_move = MOVE_NONE; s_move_p = MOTION_UNIT; layer_set_hidden(s_out_clip,true); motion_layout(); return; }
   animation_set_duration(s_move_anim,duration);
   animation_set_curve(s_move_anim,AnimationCurveLinear);
   animation_set_implementation(s_move_anim,&s_move_impl);

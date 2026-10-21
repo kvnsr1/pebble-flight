@@ -18,6 +18,9 @@ cc -std=c99 -Wall -Wextra -Werror test/motion.test.c \
   src/c/prototype/motion.c -o "$TEST_BINARY"
 "$TEST_BINARY"
 node test/native-view.test.js
+cc -Itest/pebble-stub -std=c99 -Wall -Wextra -Werror test/stretch-icon.test.c \
+  src/c/prototype/motion.c -o "$TEST_BINARY"
+"$TEST_BINARY"
 node test/live-sync.test.js
 node test/launcher-glance.test.js
 cc -std=c99 -Wall -Wextra -Werror test/glance_plan.test.c \

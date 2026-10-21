@@ -1,0 +1,13 @@
+{
+  "variant": "reentry",
+  "platform": "emery",
+  "checks": [
+    "Same first-card resting layout",
+    "open: real intermediate frames captured (12)",
+    "Same Overview resting layout",
+    "back: real intermediate frames captured (10)",
+    "Fallback/review returns to the exact selected card",
+    "Exit during motion and re-entry restores valid first card"
+  ],
+  "provider_requests": 0
+}

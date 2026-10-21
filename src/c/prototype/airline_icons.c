@@ -17,8 +17,8 @@ static bool carrier(const char *number, const char *prefix) {
   return isdigit((unsigned char)*number)!=0;
 }
 
-bool airline_icon_draw(GContext *ctx, const char *number, GPoint origin) {
-  if (!number) { return false; }
+static GDrawCommandImage *image_for(const char *number) {
+  if (!number) { return NULL; }
   uint32_t resource=0;
   static const struct { const char *iata, *icao; uint32_t resource; } airlines[]={
     {"CA","CCA",RESOURCE_ID_AIRLINE_AIR_CHINA_25},
@@ -44,14 +44,12 @@ bool airline_icon_draw(GContext *ctx, const char *number, GPoint origin) {
       resource=airlines[i].resource; break;
     }
   }
-  if (!resource) { return false; }
+  if (!resource) { return NULL; }
   unsigned slot=0;
   for (unsigned i=0;i<CACHE_SIZE;i++) {
     if (s_icons[i].resource==resource) {
       s_icons[i].used=++s_use;
-      if (!s_icons[i].image) { return false; }
-      gdraw_command_image_draw(ctx,s_icons[i].image,origin);
-      return true;
+      return s_icons[i].image;
     }
     if (s_icons[i].used<s_icons[slot].used) { slot=i; }
   }
@@ -59,9 +57,17 @@ bool airline_icon_draw(GContext *ctx, const char *number, GPoint origin) {
   s_icons[slot].resource=resource;
   s_icons[slot].used=++s_use;
   s_icons[slot].image=gdraw_command_image_create_with_resource(resource);
-  if (!s_icons[slot].image) { return false; }
-  gdraw_command_image_draw(ctx,s_icons[slot].image,origin);
+  return s_icons[slot].image;
+}
+bool airline_icon_draw(GContext *ctx,const char *number,GPoint origin) {
+  GDrawCommandImage *image=image_for(number);
+  if(!image) { return false; }
+  gdraw_command_image_draw(ctx,image,origin);
   return true;
+}
+GDrawCommandImage *airline_icon_clone(const char *number) {
+  GDrawCommandImage *image=image_for(number);
+  return image?gdraw_command_image_clone(image):NULL;
 }
 
 void airline_icons_deinit(void) {

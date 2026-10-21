@@ -31,10 +31,24 @@ int main(void) {
     assert(b.logo_x==86 && b.logo_y==66 && b.number_x==71 && b.number_y==91);
     for (int p=0;p<=1000;p++) {
       FlightHeaderPosition n=motion_flight_header(row_y,54,p);
-      assert(n.number_x>=n.logo_x+25 || n.number_y>=n.logo_y+25);
-      assert(n.logo_x>=12 && n.logo_x<=86);
+      assert(n.number_x>=n.logo_x+n.logo_size || n.number_y>=n.logo_y+n.logo_size);
+      assert(n.logo_x>=7 && n.logo_x<=86);
+      assert(n.logo_size>=25 && n.logo_size<=35);
+      assert(n.number_scale>=1000 && n.number_scale<=1120);
       assert(n.number_y>=0 && n.number_y<200);
     }
   }
+  for(int p=0;p<=1000;p++) {
+    assert(motion_smooth(p)>=0 && motion_smooth(p)<=1000);
+    assert(motion_pulse(p)>=0 && motion_pulse(p)<=1000);
+    for(int band=0;band<4;band++)assert(motion_band_offset(p,band)>=-3 && motion_band_offset(p,band)<=3);
+  }
+  assert(motion_pulse(0)==0 && motion_pulse(1000)==0);
+  assert(motion_smooth(0)==0 && motion_smooth(1000)==1000);
+  assert(motion_phase(50,100,900)==0 && motion_phase(950,100,900)==1000);
+  assert(motion_band(-8,200,0)==0 && motion_band(200,200,0)==3);
+  assert(motion_band(200,200,1)==0 && motion_band(-8,200,1)==3);
+  assert(motion_band(50,0,0)==0);
+  for(int band=0;band<4;band++)assert(motion_band_offset(0,band)==0 && motion_band_offset(1000,band)==0);
   puts("Motion geometry: exact endpoints, bounded settle, selection, clamping passed");
 }
