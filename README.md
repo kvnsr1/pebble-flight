@@ -1,11 +1,20 @@
 # Jetebble
 
+**Version 0.7.9** adds the approved [rising-cloud startup transition](docs/STARTUP_CLOUD_TRANSITION.md).
+After the plane and title sequence, a playful cloud lift fades into the current
+flight list. The four-second intro can be skipped with any button. It includes
+the five-flight settings, clock format, and animated cards from 0.7.8.
+
+Use **`main`** and rebuild for the latest approved version. Local production
+build: `python3 scripts/build-startup-preview.py --production-check`, producing
+`build/jetebble-0.7.9.pbw` and `build/pebble-flight.pbw`.
+
 **Version 0.7.8** adds up to **five saved flights**, a global **24H / 12H**
 setting, and larger All Flights cards with an airline-logo/flight-number eyebrow,
 bold route and date/status row. The logo and number move together into Overview
 and back. See [the update, actual emulator previews and validation](docs/SETTINGS_AND_CARDS.md).
-Use branch **`main`** for the approved update. Rebuild and install version 0.7.8,
-then reopen Jetebble's phone settings to enable five flights and the time-format
+These settings require version 0.7.8 or newer. Reopen Jetebble's phone settings
+after installation to enable five flights and the time-format
 selector. Older installed versions retain the three-flight settings view.
 
 **Version 0.7.7** adds the approved [plane, clouds, and title startup animation](docs/STARTUP_ANIMATION.md).

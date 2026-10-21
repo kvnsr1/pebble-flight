@@ -45,5 +45,6 @@ if not args.production:
             if f.is_file() and not any(x in ('build','node_modules','.tools') for x in rel.parts) and not rel.name.startswith('.lock'):archive.write(f,rel)
 subprocess.run([str(tools/'bin/pebble'),'clean'],cwd=project,env=env,check=True)
 subprocess.run([str(tools/'bin/pebble'),'build'],cwd=project,env=env,check=True)
-out=ROOT/('build/jetebble-0.7.8.pbw' if args.production else 'build/jetebble-review-'+args.format.lower()+'.pbw')
+version=json.loads((project/'package.json').read_text())['version']
+out=ROOT/('build/jetebble-'+version+'.pbw' if args.production else 'build/jetebble-review-'+args.format.lower()+'.pbw')
 shutil.copyfile(project/'build'/(name+'.pbw'),out);print(out)

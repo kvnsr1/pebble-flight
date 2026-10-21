@@ -19,6 +19,11 @@ args = parser.parse_args()
 name = 'startup-production-check' if args.production_check else 'startup-preview'
 project = ROOT / 'build' / name
 project.mkdir(parents=True, exist_ok=True)
+# Generated message keys can otherwise survive a switch to newer app metadata.
+if (project / 'build').exists():
+    shutil.rmtree(project / 'build')
+for lock in project.glob('.lock-waf_*'):
+    lock.unlink()
 for folder in ('src', 'resources'):
     if (project / folder).exists():
         shutil.rmtree(project / folder)
@@ -47,7 +52,8 @@ if not args.production_check:
 
 Local native C / Emery (200x228) preview with its own app identity.
 The plane crosses left to right, leaves clouds, and the clouds part to reveal
-Jetteble in Pebble Gothic 28 Bold. After 3.3 seconds, the mock flight list appears.
+Jetteble in Pebble Gothic 28 Bold. A rolling cloud lift dissolves into the mock
+flight list. The complete sequence lasts 4 seconds.
 Any button skips the intro. Hold Select on All Flights to replay.
 The companion is inert; no account, credentials, or live requests are used.
 ''')
@@ -56,7 +62,14 @@ tools = Path(os.environ.get('PEBBLE_TOOLS_DIR', Path.home() / 'Developer/pebble-
 env = dict(os.environ)
 env['PATH'] = str(tools / 'node/bin') + ':' + str(tools / 'bin') + ':' + env.get('PATH', '')
 subprocess.run([str(tools / 'bin/pebble'), 'build'], cwd=project, env=env, check=True)
-if not args.production_check:
+if args.production_check:
+    version = json.loads((project / 'package.json').read_text())['version']
+    compiled = project / 'build' / (name + '.pbw')
+    bundle = ROOT / 'build' / ('jetebble-' + version + '.pbw')
+    shutil.copyfile(compiled, bundle)
+    shutil.copyfile(compiled, ROOT / 'build/pebble-flight.pbw')
+    print('Production bundle:', bundle)
+else:
     bundle = ROOT / 'build/jetteble-startup-preview.pbw'
     shutil.copyfile(project / 'build' / (name + '.pbw'), bundle)
     source = ROOT / 'build/jetteble-startup-preview-source.zip'

@@ -177,7 +177,7 @@ Review artwork at native resolution; an enlarged preview can hide pixel defects.
   `FONT_KEY_GOTHIC_28_BOLD`; preserve the exact approved title spelling.
 
 There is no universal FPS or duration recommendation established by this research.
-The project's 110–230 ms UI transitions and 3.3-second launch intro are local
+The project's original 110–230 ms UI transitions and current four-second launch intro are local
 design choices, not Pebble standards. Measure on the chosen device.
 
 ## 5. Battery and lifecycle
@@ -250,8 +250,9 @@ For Jetebble, start with:
   [UI motion reference](MOTION_PROTOTYPE.md)
 - [offline preview builder](../scripts/build-startup-preview.py) and
   [native emulator review](../scripts/review-startup.py)
-- [captured preview](startup/startup.gif) and
-  [nine emulator checks](startup/validation.json)
+- [current cloud-transition preview](startup-cloud-transition/startup.gif),
+  [transition details](STARTUP_CLOUD_TRANSITION.md), and
+  [17 emulator checks](startup-cloud-transition/validation.json)
 
 Example prompt for a future Codex session:
 
