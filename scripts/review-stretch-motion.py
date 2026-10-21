@@ -5,6 +5,7 @@ Run with the Pebble SDK Python after installing jetebble-stretch-12h.pbw.
 Uses the existing QEMU capture helper, never a flight service or physical watch.
 """
 import argparse, importlib.util, json, re
+from uuid import UUID
 from pathlib import Path
 from PIL import Image, ImageDraw
 
@@ -13,6 +14,7 @@ parser=argparse.ArgumentParser();parser.add_argument('--format',choices=['24H','
 spec=importlib.util.spec_from_file_location('capture',ROOT/'scripts/review-motion.py')
 c=importlib.util.module_from_spec(spec);spec.loader.exec_module(c)
 from libpebble2.protocol.logs import AppLogMessage,AppLogShippingControl
+from libpebble2.protocol.apps import AppRunState,AppRunStateStart,AppRunStateStop
 heap_samples=[]
 def log(packet):
     match=re.search(r'Motion settled.* / heap (\d+)',packet.message)
@@ -25,9 +27,16 @@ c.click=settled_click
 c.OUT=ROOT/args.output/args.format.lower();c.OUT.mkdir(parents=True,exist_ok=True)
 
 def main():
-    c.time.sleep(4) # Wait for the 3.3s startup after SDK installation.
+    # An SDK update may leave the launcher open. Start the intended preview
+    # explicitly so a launcher boundary cannot pass as a flight-list boundary.
+    target=UUID('b9d81999-5940-4b69-9c76-b883fb2dc10c')
+    c.connection.send_packet(AppRunState(data=AppRunStateStop(uuid=target)))
+    c.time.sleep(.2)
+    c.connection.send_packet(AppRunState(data=AppRunStateStart(uuid=target)))
+    c.time.sleep(4.5)
     c.click('up',settle=.6) # Skip the startup overlay if it is still showing.
     initial=c.shot('list')
+    c.same(Image.open(ROOT/'docs/stretch-motion/12h/list.png'),initial,'Review explicitly launches the expected flight list')
     c.click('up',settle=.65);c.same(initial,c.grab(),'List stops at first flight')
     c.record('open-first','select');c.shot('first-overview')
     c.click('up');c.same(Image.open(c.OUT/'first-overview.png'),c.grab(),'Up stops at Overview')

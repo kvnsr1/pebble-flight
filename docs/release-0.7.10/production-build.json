@@ -1,0 +1,42 @@
+{
+  "version": "0.7.10",
+  "platform": "emery",
+  "sdk": "4.33.1",
+  "main_base": "86d4738",
+  "motion_base": "ece1b4f",
+  "merge": "bf6a359",
+  "bundle": "build/jetebble-0.7.10.pbw",
+  "sha256": "4423f9190cdab29ce54264fac363e3f0f7bca2a9d8f48c40f1fb3ee7b51b7fa0",
+  "bytes": 3397798,
+  "canonical_bundle_identical": true,
+  "production": {
+    "mock_data": false,
+    "legacy_ui": false,
+    "startup_review": false,
+    "stretch_motion": true
+  },
+  "build_report": {
+    "resources_bytes": 16487,
+    "static_ram_footprint_bytes": 64605,
+    "heap_available_before_runtime_allocations_bytes": 66467
+  },
+  "preserved_byte_for_byte": [
+    "src/c/prototype/startup.c",
+    ".gitattributes",
+    "scripts/check-cloudpebble-archive.py"
+  ],
+  "unit_suites": 13,
+  "physical_watch_tested": false,
+  "authenticated_cloudpebble_tested": false,
+  "live_provider_requests": 0,
+  "uuid": "e6fc90f6-5f5a-4f34-a18e-76f13a5b2327",
+  "sdk_metadata": "3",
+  "display_name": "Jetebble",
+  "emulator_checks": {
+    "startup": 17,
+    "motion": 26
+  },
+  "exact_resting_image_matches": 16,
+  "virtual_image_bytes": 64608,
+  "virtual_image_limit": 65535
+}
