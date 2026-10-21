@@ -1,7 +1,7 @@
 # Five flights, clock format and larger cards
 
-Jetebble **0.7.8**, review branch **`codex/five-flights-time-format`**, based on
-main `3484d46` (0.7.7). This update keeps the native C / PebbleKit JS architecture,
+Jetebble **0.7.8**, approved for **`main`** on October 21, 2026, developed on
+`codex/five-flights-time-format` from `3484d46` (0.7.7). This update keeps the native C / PebbleKit JS architecture,
 SDK 3 metadata, Emery (200×228) target, production UUID and live-data default.
 No appstore release is part of this work.
 
@@ -63,9 +63,9 @@ are retained.
 
 ## Review in CloudPebble
 
-1. Import GitHub repository `kvnsr1/pebble-flight`, branch
-   **`codex/five-flights-time-format`**, or pull that branch in a separate review
-   project. Use **Pebble C SDK**, SDK metadata **3**, target **Emery / Pebble Time 2**.
+1. Import GitHub repository `kvnsr1/pebble-flight`, branch **`main`**, or pull
+   `main` in your existing linked project. Use **Pebble C SDK**, SDK metadata **3**,
+   target **Emery / Pebble Time 2**.
 2. Build & Run → Emulator → Emery previews the normal app. Normal source uses
    live data and the production identity; opening it requires phone data for
    populated flight screens.
@@ -74,10 +74,11 @@ are retained.
    separate **Jetebble Review** UUID `b8c70788-473f-4d58-8b65-a772fa1cb09b`,
    mock mode and an inert phone companion. They cannot update live flights.
 
-The normal build still opens the existing GitHub Pages settings URL. Until
-this update is approved for `main` and GitHub Pages deploys it, that hosted page
-still has the old three-slot controls. Use the isolated preview ZIPs to review
-the watch UI and the local `config/index.html` preview for the new settings.
+The normal build opens the existing GitHub Pages settings URL. After GitHub
+Pages deploys the approved `main` update, install version 0.7.8 and reopen the
+phone settings to use five slots and the time-format selector. Older installed
+companions intentionally keep the three-slot controls. The isolated preview
+ZIPs let you review the watch UI without phone settings or credentials.
 
 Generate isolated review files using the installed local SDK:
 

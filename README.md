@@ -4,8 +4,9 @@
 setting, and larger All Flights cards with an airline-logo/flight-number eyebrow,
 bold route and date/status row. The logo and number move together into Overview
 and back. See [the update, actual emulator previews and validation](docs/SETTINGS_AND_CARDS.md).
-The review branch is **`codex/five-flights-time-format`**; import that branch to
-review this update before it is approved for `main`.
+Use branch **`main`** for the approved update. Rebuild and install version 0.7.8,
+then reopen Jetebble's phone settings to enable five flights and the time-format
+selector. Older installed versions retain the three-flight settings view.
 
 **Version 0.7.7** adds the approved [plane, clouds, and title startup animation](docs/STARTUP_ANIMATION.md).
 Any button skips the intro; the existing app continues underneath it. An isolated
