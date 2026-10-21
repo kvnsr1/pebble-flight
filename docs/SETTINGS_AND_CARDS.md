@@ -74,6 +74,11 @@ are retained.
    separate **Jetebble Review** UUID `b8c70788-473f-4d58-8b65-a772fa1cb09b`,
    mock mode and an inert phone companion. They cannot update live flights.
 
+The normal build still opens the existing GitHub Pages settings URL. Until
+this update is approved for `main` and GitHub Pages deploys it, that hosted page
+still has the old three-slot controls. Use the isolated preview ZIPs to review
+the watch UI and the local `config/index.html` preview for the new settings.
+
 Generate isolated review files using the installed local SDK:
 
 ```sh
