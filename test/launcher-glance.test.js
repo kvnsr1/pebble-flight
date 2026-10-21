@@ -11,8 +11,8 @@ function raw(departure, arrival) { return {
 function records(flights, raws) { var cache = {}; flights.forEach(function(f, i) {
   cache[f.flightNumber + '|' + f.flightDate] = {flight: raws[i], updatedAt: now};
 }); return cache; }
-function slices(flights, cache, time, legacy, states) {
-  return glance.plan(flights, cache || {}, legacy || {}, states || {}, time || now).trim().split('\n').map(function(line) {
+function slices(flights, cache, time, legacy, states, format) {
+  return glance.plan(flights, cache || {}, legacy || {}, states || {}, time || now, format).trim().split('\n').map(function(line) {
     var tab = line.indexOf('\t'); return {expires: Number(line.slice(0, tab)), text: line.slice(tab + 1)};
   });
 }
@@ -65,4 +65,16 @@ raws = [raw('2026-10-19T19:00:00Z','2026-10-19T20:00:00Z'),
   raw('2026-10-19T21:00:00Z','2026-10-19T22:00:00Z'),
   raw('2026-10-20T19:00:00Z','2026-10-20T20:00:00Z')];
 result = slices(flights, records(flights, raws)); assert.strictEqual(result.length, 7);
+flights=[];raws=[];
+for (var i=0;i<5;i++) {
+  var date='2026-10-'+(19+i);
+  flights.push(configured('AA'+(i+1),date));
+  raws.push(raw(date+'T20:00:00Z',date+'T22:00:00Z'));
+}
+cache=records(flights,raws);result=slices(flights,cache);
+assert.strictEqual(result.length,11,'five flights need ten expiring slices and one permanent fallback');
+var twelve=slices(flights,cache,now,{}, {},'12H');
+assert.ok(twelve[0].text.includes('DEP EST 1:00 PM PDT'));
+assert.deepStrictEqual(twelve.map(function(s){return s.expires;}),result.map(function(s){return s.expires;}));
+twelve.forEach(function(s){assert.ok(Buffer.byteLength(s.text,'utf8')<=150);});
 console.log('Launcher chronology, expiry, terminal/empty states, local time, missing data and wire bounds passed');

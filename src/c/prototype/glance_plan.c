@@ -1,6 +1,27 @@
 #include "glance_plan.h"
 #include <string.h>
 
+bool glance_plan_pick(const GlancePlan *plan, int32_t now, unsigned limit,
+                      unsigned position, GlanceEntry *entry) {
+  if (!limit || position>=limit) { return false; }
+  unsigned available=0;
+  for (unsigned i=0;i<plan->count;i++) {
+    if (!plan->entries[i].expires || plan->entries[i].expires>now) { available++; }
+  }
+  if (position>=available) { return false; }
+  if (limit>1 && available>limit && position==limit-1) {
+    memset(entry,0,sizeof(*entry));
+    strcpy(entry->text,"Open to view upcoming flights");
+    return true;
+  }
+  unsigned index=0;
+  for (unsigned i=0;i<plan->count;i++) {
+    if (plan->entries[i].expires && plan->entries[i].expires<=now) { continue; }
+    if (index++==position) { *entry=plan->entries[i]; return true; }
+  }
+  return false;
+}
+
 bool glance_plan_parse(const char *wire, GlancePlan *plan) {
   memset(plan,0,sizeof(*plan));
   if (!wire || !*wire) { return false; }

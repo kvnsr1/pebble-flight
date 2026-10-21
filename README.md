@@ -1,5 +1,12 @@
 # Jetebble
 
+**Version 0.7.8** adds up to **five saved flights**, a global **24H / 12H**
+setting, and larger All Flights cards with an airline-logo/flight-number eyebrow,
+bold route and date/status row. The logo and number move together into Overview
+and back. See [the update, actual emulator previews and validation](docs/SETTINGS_AND_CARDS.md).
+The review branch is **`codex/five-flights-time-format`**; import that branch to
+review this update before it is approved for `main`.
+
 **Version 0.7.7** adds the approved [plane, clouds, and title startup animation](docs/STARTUP_ANIMATION.md).
 Any button skips the intro; the existing app continues underneath it. An isolated
 offline review build can replay the sequence.
@@ -71,8 +78,14 @@ building, importing, or updating this repository.
 ## Interface and buttons
 
 All Flights lists all configured flights, with route, departure date, operational
-status and a clear selected row. The existing phone configuration supports up to
-three flights. Logged landed flights stay until you remove them in settings.
+status and a clear selected card. Two larger cards are visible at once; Up/Down
+scrolls through up to five configured flights. Logged landed flights stay until
+you remove them in settings.
+
+In phone settings, **Time format → 24H / 12H** applies to all flight clocks,
+update/refresh clocks and the app-menu subtitle. The default is 24H. Saving only
+this preference re-renders cached data without an API request. Airport-local
+dates, timezones and flight progress remain the same.
 
 The detail sequence is **Overview → Departure → Arrival → Booking**:
 
@@ -109,7 +122,7 @@ key stays in phone storage.
 - **LIVE** indicates a cached result within the refresh policy; **SAVED** or
   **OFFLINE** indicates saved/old data, and **WAIT** means an update is in progress.
   Select opens exact update/source/error details. A failed request preserves data.
-- Times are **24-hour airport-local**, with each endpoint's local date, timezone
+- Times are **airport-local**, in your chosen 24H/12H format, with each endpoint's local date, timezone
   abbreviation and UTC offset. Bundled Moment Timezone/IANA data handles DST
   without depending on `Intl` support. Unknown timezones remain explicitly
   unknown instead of showing UTC as if it were airport-local.
@@ -121,7 +134,7 @@ key stays in phone storage.
   **Unknown** means not reported; **N/A** means unavailable/inapplicable.
 - Progress uses FlightAware's explicit `progress_percent`. Upcoming, boarding,
   departed/taxiing and pre-departure delayed flights stay at 0%; landed is 100%;
-  canceled has no journey. Missing airborne progress shows **PROGRESS UNKNOWN**.
+  canceled has no journey. Missing airborne progress shows **NA**.
   It is never inferred from formatted local times.
 - Old cached routes and booking details remain usable after upgrade. Fields not
   present in the old cache stay unknown until a successful fresh lookup.

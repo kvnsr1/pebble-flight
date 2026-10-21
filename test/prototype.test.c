@@ -49,7 +49,7 @@ int main(void) {
   navigation_move(&nav,-1,count);
   assert(nav.selected == 0 && nav.top == 0);
   for (int i=0; i<20; i++) { navigation_move(&nav,1,count); }
-  assert(nav.selected == 5 && nav.top == 3);
+  assert(nav.selected == 5 && nav.top == 4);
   navigation_select(&nav,count);
   assert(nav.page == PAGE_OVERVIEW);
   navigation_move(&nav,-1,count);
@@ -64,7 +64,7 @@ int main(void) {
   navigation_select(&nav,count);
   assert(nav.note);
   assert(!navigation_back(&nav));
-  assert(nav.page == PAGE_LIST && nav.selected == 5 && nav.top == 3 && !nav.note);
+  assert(nav.page == PAGE_LIST && nav.selected == 5 && nav.top == 4 && !nav.note);
   navigation_select(&nav,count);
   for (int i=0; i<3; i++) { navigation_move(&nav,1,count); }
   assert(nav.page == PAGE_BOOKING);
@@ -75,13 +75,13 @@ int main(void) {
   navigation_select(&nav,count);
   assert(nav.note);
   assert(!navigation_back(&nav));
-  assert(nav.page == PAGE_LIST && nav.selected == 5 && nav.top == 3 && !nav.note);
+  assert(nav.page == PAGE_LIST && nav.selected == 5 && nav.top == 4 && !nav.note);
   navigation_toggle_empty(&nav);
   navigation_select(&nav,count);
   navigation_move(&nav,-1,count);
-  assert(nav.page == PAGE_LIST && nav.empty && nav.selected == 5 && nav.top == 3);
+  assert(nav.page == PAGE_LIST && nav.empty && nav.selected == 5 && nav.top == 4);
   navigation_toggle_empty(&nav);
-  assert(!nav.empty && nav.selected == 5 && nav.top == 3);
+  assert(!nav.empty && nav.selected == 5 && nav.top == 4);
   navigation_move(&nav,-1,count);
   navigation_select(&nav,count);
   assert(nav.selected == 4 && nav.page == PAGE_OVERVIEW);

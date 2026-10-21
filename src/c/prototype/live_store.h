@@ -2,7 +2,7 @@
 #include "flight_model.h"
 #include <stdint.h>
 
-enum { LIVE_FLIGHT_LIMIT=3, LIVE_TEXT_SIZE=96 };
+enum { LIVE_FLIGHT_LIMIT=5, LIVE_TEXT_SIZE=96 };
 typedef enum {
   TX_KEY,TX_NUMBER,TX_DATE,TX_ORIGIN,TX_DESTINATION,TX_DEP_NAME,TX_ARR_NAME,
   TX_DEP_SCHEDULED,TX_ARR_SCHEDULED,TX_DEP_CURRENT,TX_ARR_CURRENT,
@@ -17,13 +17,13 @@ typedef struct {
   int dep_delay,arr_delay,dep_delay_known,arr_delay_known;
   int dep_terminal_state,gate_state,arr_terminal_state,baggage_state,booking_state,seat_state;
   SeatPosition position;
-  bool stale,loading;
+  bool stale,loading,twelve_hour;
   const char *text[TX_COUNT];
 } FlightPacket;
 typedef struct {
   Flight flight;
   char text[TX_COUNT][LIVE_TEXT_SIZE];
-  bool stale,loading;
+  bool stale,loading,twelve_hour;
 } NativeFlight;
 typedef struct {
   NativeFlight flights[LIVE_FLIGHT_LIMIT],pending[LIVE_FLIGHT_LIMIT];

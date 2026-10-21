@@ -1,0 +1,25 @@
+{
+  "format": "12H",
+  "platform": "emery",
+  "provider_requests": 0,
+  "checks": [
+    "List stops at first flight",
+    "open-first: real intermediate frames captured (9)",
+    "Up stops at Overview",
+    "Down stops at Booking",
+    "Select toggles the data note",
+    "Back restores first card exactly",
+    "selection: real intermediate frames captured (5)",
+    "open-second: real intermediate frames captured (10)",
+    "Overview is still at rest",
+    "back-second: real intermediate frames captured (9)",
+    "Reverse shared transition restores second card",
+    "Rapid input interrupts motion and reaches Arrival",
+    "Back from Arrival preserves selection and scroll",
+    "List stops at fifth flight",
+    "Fifth flight restores selection and scrolled position",
+    "Empty screen settles",
+    "Empty demonstration restores fifth flight"
+  ],
+  "capture": "Actual QEMU frames with SDK colour correction; synthetic data"
+}

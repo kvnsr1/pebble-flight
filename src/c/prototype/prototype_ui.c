@@ -196,42 +196,67 @@ static void draw_list(GContext *ctx) {
     return;
   }
   int row_shift = 0;
-  int selection_y = 51 + (int)(s_nav.selected - s_nav.top) * 51;
+  int selection_y = FLIGHT_LIST_Y + (int)(s_nav.selected - s_nav.top) * FLIGHT_ROW_HEIGHT;
   bool selection_move = s_move == MOVE_SELECTION && !s_drawing_old;
   if (selection_move) {
     int p = motion_ease(s_move_p);
-    row_shift = motion_mix(((int)s_nav.top - (int)s_before.top) * 51, 0, p);
-    selection_y = motion_mix(51 + ((int)s_before.selected - (int)s_before.top) * 51,
+    row_shift = motion_mix(((int)s_nav.top - (int)s_before.top) * FLIGHT_ROW_HEIGHT, 0, p);
+    selection_y = motion_mix(FLIGHT_LIST_Y + ((int)s_before.selected - (int)s_before.top) * FLIGHT_ROW_HEIGHT,
                             selection_y, p);
   }
-  fill(ctx,GRect(0,selection_y,190,51),background());
-  fill(ctx,GRect(0,selection_y,3,51),accent());
+  // Draw the card surfaces before the gliding selection frame and their text.
+  for (int row=-1;row<=VISIBLE_FLIGHTS;row++) {
+    int index=(int)s_nav.top+row;
+    if (index<0 || !data_at(index)) { continue; }
+    graphics_context_set_fill_color(ctx,background());
+    graphics_fill_rect(ctx,GRect(5,FLIGHT_LIST_Y+row*FLIGHT_ROW_HEIGHT+row_shift,184,FLIGHT_CARD_HEIGHT),6,GCornersAll);
+  }
+  graphics_context_set_stroke_color(ctx,GColorWhite);
+  graphics_context_set_stroke_width(ctx,2);
+  graphics_draw_round_rect(ctx,GRect(5,selection_y,184,FLIGHT_CARD_HEIGHT),6);
+  fill(ctx,GRect(8,selection_y+10,3,FLIGHT_CARD_HEIGHT-20),accent());
   for (int row=-1; row<=VISIBLE_FLIGHTS; row++) {
     if ((int)s_nav.top + row < 0) { continue; }
     size_t index=s_nav.top+row;
     const Flight *flight=data_at(index);
     if (!flight) { break; }
-    int y=51+row*51+row_shift;
+    int y=FLIGHT_LIST_Y+row*FLIGHT_ROW_HEIGHT+row_shift;
     bool selected=index==s_nav.selected;
     bool hero = (s_move == MOVE_OPEN || (s_move == MOVE_CLOSE && s_before.page == PAGE_OVERVIEW && !s_before.note)) && selected;
-    if (!hero) { text(ctx,flight->number,10,y-2,100,24,FONT_KEY_GOTHIC_18_BOLD,GColorWhite,GTextAlignmentLeft); }
-    text(ctx,flight->date,106,y+1,72,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentRight);
-    char route[24];
-    snprintf(route,sizeof(route),"%s > %s",flight->departure.code,flight->arrival.code);
-    text(ctx,route,10,y+16,162,24,FONT_KEY_GOTHIC_18_BOLD,GColorWhite,GTextAlignmentLeft);
+    if (!hero) {
+      if (!airline_icon_draw(ctx,flight->number,GPoint(12,y+3))) { pebble_plane_draw(ctx,GPoint(24,y+15)); }
+      text(ctx,flight->number,44,y+2,130,25,FONT_KEY_GOTHIC_18_BOLD,GColorWhite,GTextAlignmentLeft);
+    }
+    const char *codes[]={flight->departure.code,flight->arrival.code};
+    for (int side=0;side<2;side++) {
+      const char *key=FONT_KEY_GOTHIC_28_BOLD;
+      GSize size=graphics_text_layout_get_content_size(codes[side],font(key),GRect(0,0,200,40),GTextOverflowModeFill,GTextAlignmentLeft);
+      if (size.w>64) { key=FONT_KEY_GOTHIC_24_BOLD; }
+      text(ctx,codes[side],side?113:13,y+22,64,34,key,GColorWhite,side?GTextAlignmentRight:GTextAlignmentLeft);
+    }
+    graphics_context_set_stroke_color(ctx,GColorWhite);
+    graphics_context_set_stroke_width(ctx,2);
+    graphics_draw_line(ctx,GPoint(87,y+40),GPoint(105,y+40));
+    graphics_draw_line(ctx,GPoint(100,y+35),GPoint(105,y+40));
+    graphics_draw_line(ctx,GPoint(105,y+40),GPoint(100,y+45));
+    text(ctx,flight->date,13,y+54,72,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentLeft);
     GColor tone=status_color(flight);
-    status_icon(ctx,flight->status,GPoint(15,y+43),tone);
+    status_icon(ctx,flight->status,GPoint(96,y+63),tone);
     char status[40];
-    text(ctx,status_text(flight,status,sizeof(status)),27,y+34,149,17,FONT_KEY_GOTHIC_14,tone,GTextAlignmentLeft);
+    const char *status_label=status_text(flight,status,sizeof(status));
+    if (flight->status==FLIGHT_DELAYED && flight->departure.time.delay_known && flight->departure.time.delay_minutes>0) {
+      snprintf(status,sizeof(status),"+%dm late",flight->departure.time.delay_minutes); status_label=status;
+    }
+    text(ctx,status_label,106,y+54,77,18,FONT_KEY_GOTHIC_14,tone,GTextAlignmentLeft);
     if (selected) {
       graphics_context_set_stroke_color(ctx,GColorWhite);
       graphics_context_set_stroke_width(ctx,2);
-      graphics_draw_line(ctx,GPoint(179,selection_y+22),GPoint(183,selection_y+26));
-      graphics_draw_line(ctx,GPoint(183,selection_y+26),GPoint(179,selection_y+30));
+      graphics_draw_line(ctx,GPoint(179,selection_y+8),GPoint(183,selection_y+12));
+      graphics_draw_line(ctx,GPoint(183,selection_y+12),GPoint(179,selection_y+16));
     }
   }
-  // Fixed chrome masks the scrolling rows, using the original list geometry.
-  fill(ctx,GRect(0,0,200,51),GColorBlack);
+  // Fixed chrome masks the scrolling cards.
+  fill(ctx,GRect(0,0,200,FLIGHT_LIST_Y),GColorBlack);
   text(ctx,"All flights",10,0,148,32,FONT_KEY_GOTHIC_28_BOLD,GColorWhite,GTextAlignmentLeft);
   text(ctx,count,151,10,39,18,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentRight);
   text(ctx,
@@ -241,7 +266,7 @@ static void draw_list(GContext *ctx) {
        "YOUR FLIGHTS",
 #endif
        10,30,178,18,FONT_KEY_GOTHIC_14,accent(),GTextAlignmentLeft);
-  fill(ctx,GRect(0,204,200,24),GColorBlack);
+  fill(ctx,GRect(0,203,200,25),GColorBlack);
   if (data_count()>VISIBLE_FLIGHTS) {
     fill(ctx,GRect(195,52,2,150),GColorDarkGray);
     int thumb_h=150*VISIBLE_FLIGHTS/(int)data_count();
@@ -311,8 +336,8 @@ static void draw_overview(GContext *ctx, const Flight *flight) {
       }
     }
   }
-  if (show_labels && !airline_icon_draw(ctx,flight->number,GPoint(86,66))) {
-    pebble_plane_draw(ctx,GPoint(98,78));
+  if (!hero) {
+    if (!airline_icon_draw(ctx,flight->number,GPoint(86,66))) { pebble_plane_draw(ctx,GPoint(98,78)); }
   }
   if (!(s_move == MOVE_OPEN || (s_move == MOVE_CLOSE && s_before.page == PAGE_OVERVIEW && !s_before.note))) {
     text(ctx,flight->number,51,91,94,25,FONT_KEY_GOTHIC_18_BOLD,GColorWhite,GTextAlignmentCenter);
@@ -350,7 +375,7 @@ static void draw_airport(GContext *ctx, const Flight *flight, bool departure) {
   snprintf(schedule_label,sizeof(schedule_label),date_change?"SCHED %s":"SCHEDULED",time->scheduled_date);
   if (zone_change) { snprintf(schedule_label,sizeof(schedule_label),"SCHED %s",time->scheduled_zone); }
   label(ctx,schedule_label,10,103,94);
-  text(ctx,time->scheduled,109,96,78,30,FONT_KEY_GOTHIC_24_BOLD,GColorWhite,GTextAlignmentRight);
+  text(ctx,time->scheduled,109,96,78,30,strlen(time->scheduled)>5?FONT_KEY_GOTHIC_18_BOLD:FONT_KEY_GOTHIC_24_BOLD,GColorWhite,GTextAlignmentRight);
   const char *kind=time->kind==TIME_ACTUAL?"ACTUAL":time->kind==TIME_ESTIMATED?"ESTIMATED":
                    time->kind==TIME_UNKNOWN?"NOT REPORTED":"UNAVAILABLE";
   const char *value=time->kind==TIME_UNKNOWN?"Unknown":time->kind==TIME_UNAVAILABLE?"N/A":time->current;
@@ -437,12 +462,13 @@ static void draw_note(GContext *ctx, const Flight *flight) {
   label(ctx,"ABOUT THIS FLIGHT",10,3,178);
   text(ctx,flight->number,10,23,176,32,FONT_KEY_GOTHIC_28_BOLD,GColorWhite,GTextAlignmentLeft);
 #if PEBBLE_MOCK_DATA
-  text(ctx,"MOCK / fixed example\n24h airport-local times\nUTC offsets include DST\nUnknown = not reported\nN/A = unavailable",10,64,177,112,FONT_KEY_GOTHIC_18,GColorWhite,GTextAlignmentLeft);
+  text(ctx,"MOCK / fixed example\nAirport-local times\nUTC offsets include DST\nUnknown = not reported\nN/A = unavailable",10,64,177,112,FONT_KEY_GOTHIC_18,GColorWhite,GTextAlignmentLeft);
 #else
   const NativeFlight *m=live_metadata_at(s_nav.selected);
   char information[512];
   const char *error=m && m->text[TX_ERROR][0]?m->text[TX_ERROR]:live_global_error();
-  snprintf(information,sizeof(information),"%s / 24h airport-local\nUpdated %s\nNext auto %s\n%s\nUnknown = not reported\nN/A = unavailable",source_label(),
+  snprintf(information,sizeof(information),"%s / %s airport-local\nUpdated %s\nNext auto %s\n%s\nUnknown = not reported\nN/A = unavailable",source_label(),
+    m && m->twelve_hour?"12h":"24h",
     m?m->text[TX_UPDATED]:"Never",m?m->text[TX_NEXT_REFRESH]:"--",
     error[0]?error:"Times include local dates and DST.");
   text(ctx,information,10,60,177,120,FONT_KEY_GOTHIC_14,GColorWhite,GTextAlignmentLeft);
@@ -512,12 +538,16 @@ static void hero_update(Layer *layer, GContext *ctx) {
   if (!opening && !(s_move == MOVE_CLOSE && s_before.page == PAGE_OVERVIEW && !s_before.note)) { return; }
   const Flight *flight = data_at(s_nav.selected);
   if (!flight) { return; }
-  int p = motion_ease(opening?s_move_p:MOTION_UNIT-s_move_p);
-  int row_y = 49 + ((int)s_nav.selected - (int)s_nav.top)*51;
+  int p = opening?s_move_p:MOTION_UNIT-s_move_p;
+  int row_y = FLIGHT_LIST_Y + ((int)s_nav.selected - (int)s_nav.top)*FLIGHT_ROW_HEIGHT;
   GSize size = graphics_text_layout_get_content_size(flight->number,font(FONT_KEY_GOTHIC_18_BOLD),
     GRect(0,0,190,25),GTextOverflowModeTrailingEllipsis,GTextAlignmentLeft);
-  text(ctx,flight->number,motion_mix(10,98-size.w/2,p),motion_mix(row_y,91,p),
-       150,25,FONT_KEY_GOTHIC_18_BOLD,GColorWhite,GTextAlignmentLeft);
+  FlightHeaderPosition position=motion_flight_header(row_y,size.w,p);
+  if (!airline_icon_draw(ctx,flight->number,GPoint(position.logo_x,position.logo_y))) {
+    pebble_plane_draw(ctx,GPoint(position.logo_x+12,position.logo_y+12));
+  }
+  text(ctx,flight->number,position.number_x,position.number_y,150,25,
+       FONT_KEY_GOTHIC_18_BOLD,GColorWhite,GTextAlignmentLeft);
 }
 static void top_layer(Layer *layer) {
   layer_remove_from_parent(layer);
@@ -538,8 +568,8 @@ static void motion_layout(void) {
     clip_scene(s_in_clip,s_canvas,full,0,direction*(228-travel));
   } else if (s_move == MOVE_OPEN || s_move == MOVE_CLOSE) {
     int p = motion_ease(s_move == MOVE_OPEN?s_move_p:MOTION_UNIT-s_move_p);
-    int row_y = 51+((int)s_nav.selected-(int)s_nav.top)*51;
-    GRect rect = GRect(0,motion_mix(row_y,0,p),motion_mix(190,200,p),motion_mix(51,228,p));
+    int row_y = FLIGHT_LIST_Y+((int)s_nav.selected-(int)s_nav.top)*FLIGHT_ROW_HEIGHT;
+    GRect rect = GRect(motion_mix(5,0,p),motion_mix(row_y,0,p),motion_mix(184,200,p),motion_mix(FLIGHT_CARD_HEIGHT,228,p));
     clip_scene(s_move == MOVE_OPEN?s_in_clip:s_out_clip,
                s_move == MOVE_OPEN?s_canvas:s_outgoing,rect,0,0);
   } else if (s_move == MOVE_NOTE) {

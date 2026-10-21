@@ -5,26 +5,30 @@ function localDate(iso, timezone) {
   var value = airportTime.local(iso, timezone);
   return value ? value.format('YYYY-MM-DD') : '--';
 }
-function localTime(iso, timezone) {
+function localTime(iso, timezone, format) {
   var value = airportTime.local(iso, timezone);
-  return value ? value.format('h:mm A') : '--';
+  return value ? value.format(airportTime.clockPattern(format)) : '--';
 }
 
-function deviceLocalTime(iso) {
+function deviceLocalTime(iso, format) {
   if (!iso) { return '--'; }
   // Some PebbleKit JS runtimes expose Intl without usable ICU data. Calling
   // its formatter can abort the runtime instead of throwing a catchable error.
   // These are phone-local labels; native Date getters need no locale database.
   var date = new Date(iso);
+  if (!isFinite(date.getTime())) { return '--'; }
   var hour = date.getHours();
+  if (airportTime.timeFormat(format) === '24H') {
+    return ('0' + hour).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2);
+  }
   return (hour % 12 || 12) + ':' + ('0' + date.getMinutes()).slice(-2) + (hour >= 12 ? ' PM' : ' AM');
 }
 
-function deviceLocalDateTime(epoch) {
+function deviceLocalDateTime(epoch, format) {
   if (!epoch) { return '--'; }
   var date = new Date(epoch);
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return months[date.getMonth()] + ' ' + date.getDate() + ' ' + deviceLocalTime(date.toISOString());
+  return months[date.getMonth()] + ' ' + date.getDate() + ' ' + deviceLocalTime(date.toISOString(), format);
 }
 
 function epochMs(iso) {
@@ -145,7 +149,7 @@ function chooseFlight(flights, date) {
   return matches[0];
 }
 
-function toMessage(flight) {
+function toMessage(flight, format) {
   var status = statusFor(flight);
   var originTimezone = flight.origin && flight.origin.timezone;
   var destinationTimezone = flight.destination && flight.destination.timezone;
@@ -155,9 +159,9 @@ function toMessage(flight) {
     ORIGIN: airportCode(flight.origin),
     DESTINATION: airportCode(flight.destination),
     DEPARTURE_TIME: localTime(
-      flight.actual_out || flight.estimated_out || flight.scheduled_out, originTimezone),
+      flight.actual_out || flight.estimated_out || flight.scheduled_out, originTimezone, format),
     ARRIVAL_TIME: localTime(
-      flight.actual_in || flight.estimated_in || flight.scheduled_in, destinationTimezone),
+      flight.actual_in || flight.estimated_in || flight.scheduled_in, destinationTimezone, format),
     STATUS_LABEL: status.label,
     STATUS_LEVEL: status.level,
     DEPARTURE_GATE: valueOrDash(flight.gate_origin),
@@ -167,7 +171,7 @@ function toMessage(flight) {
     AIRCRAFT_MODEL: aircraftModel(flight.aircraft_type),
     AIRCRAFT_NUMBER: valueOrDash(flight.registration),
     AIRCRAFT_FIRST_FLIGHT: '--',
-    UPDATED_AT: deviceLocalTime(new Date().toISOString())
+    UPDATED_AT: deviceLocalTime(new Date().toISOString(), format)
   };
 }
 

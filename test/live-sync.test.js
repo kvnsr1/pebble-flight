@@ -54,7 +54,7 @@ function harness(storage, entry) {
       var request=requests[index]; request.status=status || 200;
       request.responseText=JSON.stringify(body || {flights:[raw]}); request.onload();
     },
-    latest:function() { return sent.filter(function(m) { return m.UI_COUNT===1; }).slice(-1)[0]; }
+    latest:function() { return sent.filter(function(m) { return m.UI_COUNT>0; }).slice(-1)[0]; }
   };
 }
 
@@ -196,4 +196,52 @@ h.complete(0,200,{flights:[overnight]});
 assert.strictEqual(h.latest().UI_DEP_SCHEDULED,'20:30');
 assert.strictEqual(h.latest().UI_DEP_DATE,'22 OCT');
 
-console.log('Native bootstrap, credential races, restart handshake, future lookup bounds and airport-local dates passed');
+// A global display preference re-renders every cached flight immediately. It
+// does not perform a paid lookup, reset the selected fifth flight, or falsify
+// the update time. Older hosted settings responses retain the saved preference.
+var fiveFlights=[],fiveRaw={},fiveStates={};
+for (var i=0;i<5;i++) {
+  var item={flightNumber:'AA'+(i+1),flightDate:'2026-10-16'};fiveFlights.push(item);
+  var itemKey=item.flightNumber+'|'+item.flightDate;
+  fiveRaw[itemKey]={flight:raw,updatedAt:now};
+  fiveStates[itemKey]={lastRequestAt:now,nativeRequestedAt:now,actualOut:now-3600000};
+}
+var fiveStore={aeroApiKey:'SYNTHETIC_TEST_KEY','pebbleFlight.flights':JSON.stringify(fiveFlights),
+  'pebbleFlight.rawCache':JSON.stringify(fiveRaw),'pebbleFlight.refreshState':JSON.stringify(fiveStates),
+  'pebbleFlight.activeIndex':'4'};
+h=harness(fiveStore);h.service.start({nativeUI:true});
+assert.strictEqual(h.requests.length,0);
+assert.strictEqual(h.latest().UI_COUNT,5);assert.strictEqual(h.latest().UI_INDEX,4);
+function saveFormat(target,format) {
+  var result={apiKey:'',flights:fiveFlights};
+  if (format!==undefined) { result.timeFormat=format; }
+  target.fire('webviewclosed',{response:encodeURIComponent(JSON.stringify(result))});
+}
+saveFormat(h,'12H');
+assert.strictEqual(h.requests.length,0,'appearance-only changes must not query the provider');
+assert.strictEqual(fiveStore['pebbleFlight.activeIndex'],'4');
+assert.strictEqual(h.latest().DEPARTURE_TIME,'4:47 PM');
+assert.strictEqual(h.latest().UI_TIME_FORMAT,12);
+assert.strictEqual(h.latest().UI_UPDATED,'2026-10-17 2:00 AM UTC');
+assert.ok(h.latest().NEXT_REFRESH_AT.match(/\d{1,2}:\d{2} [AP]M$/));
+assert.ok(h.sent.filter(function(m) {return m.GLANCE_PLAN;}).slice(-1)[0].GLANCE_PLAN.includes('10:58 AM BST'));
+assert.strictEqual(h.sent.filter(function(m) {return m.UI_COUNT===5;}).slice(-5)[0].DEPARTURE_TIME,'4:47 PM');
+var reboot=harness(fiveStore);reboot.service.start({nativeUI:true});
+assert.strictEqual(reboot.latest().UI_TIME_FORMAT,12,'clock preference survives a companion restart');
+assert.strictEqual(reboot.requests.length,0);
+saveFormat(reboot);assert.strictEqual(fiveStore['pebbleFlight.timeFormat'],'12H');
+saveFormat(reboot,'24H');assert.strictEqual(reboot.latest().DEPARTURE_TIME,'16:47');
+assert.strictEqual(reboot.latest().UI_UPDATED,'2026-10-17 02:00 UTC');
+assert.strictEqual(reboot.requests.length,0);
+assert.strictEqual(fiveStore.aeroApiKey,'SYNTHETIC_TEST_KEY');
+// A cached three-slot page cannot silently delete flights four and five, or
+// replace the key before the user reopens the current settings page.
+reboot.fire('webviewclosed',{response:encodeURIComponent(JSON.stringify({
+  apiKey:'SYNTHETIC_STALE_PAGE_KEY',flights:fiveFlights.slice(0,3)
+}))});
+assert.strictEqual(JSON.parse(fiveStore['pebbleFlight.flights']).length,5);
+assert.strictEqual(fiveStore.aeroApiKey,'SYNTHETIC_TEST_KEY');
+assert.strictEqual(fiveStore['pebbleFlight.timeFormat'],'24H');
+assert.strictEqual(reboot.requests.length,0);
+
+console.log('Native bootstrap, races, date bounds, five-flight sync and persistent global time formatting passed');

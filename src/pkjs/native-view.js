@@ -8,7 +8,7 @@ function field(object, key) {
   return {value: present(value) ? String(value) : '',
     state: present(value) ? 0 : Object.prototype.hasOwnProperty.call(object, key) ? UNKNOWN : UNAVAILABLE};
 }
-function endpoint(raw, departure) {
+function endpoint(raw, departure, timeFormat) {
   var airport = raw[departure ? 'origin' : 'destination'] || {};
   // Gate schedule and current times use the same basis. Never mix runway and
   // gate times to manufacture a delay or an unreported gate estimate.
@@ -21,7 +21,8 @@ function endpoint(raw, departure) {
   var reference = b || a;
   return {
     code: airport.code_iata || airport.code || '---', name: airport.name || 'Airport name unknown',
-    scheduled: a ? a.format('HH:mm') : '--:--', current: b ? b.format('HH:mm') : '',
+    scheduled: a ? a.format(times.clockPattern(timeFormat)) : '--:--',
+    current: b ? b.format(times.clockPattern(timeFormat)) : '',
     date: reference ? reference.format('DD MMM').toUpperCase() : 'Unknown',
     scheduledDate: a ? a.format('DD MMM').toUpperCase() : 'Unknown',
     scheduledZone: a && b && a.utcOffset() !== b.utcOffset() ? (a.zoneAbbr() !== b.zoneAbbr() ? a.zoneAbbr() : 'UTC' + a.format('Z')) : '',
@@ -42,16 +43,17 @@ function operational(raw, departure) {
   if (departure.delayKnown && departure.delay > 0) { return 4; }
   return raw.scheduled_out || raw.scheduled_off ? 0 : 8;
 }
-function toMessage(configured, record, legacy, index, count, generation, state) {
+function toMessage(configured, record, legacy, index, count, generation, state, timeFormat) {
   state = state || {};
   var raw = record && record.flight || {};
-  var departure = endpoint(raw, true), arrival = endpoint(raw, false);
+  var departure = endpoint(raw, true, timeFormat), arrival = endpoint(raw, false, timeFormat);
   var number = configured.flightNumber;
   var hasRaw = Boolean(record && record.flight);
   var booking = {value: configured.bookingCode || '', state: configured.bookingCode ? 0 : UNKNOWN};
   var seat = {value: configured.seatNumber || '', state: configured.seatNumber ? 0 : UNKNOWN};
   var result = {
     UI_COUNT: count, UI_INDEX: index, UI_GENERATION: generation,
+    UI_TIME_FORMAT: times.timeFormat(timeFormat) === '12H' ? 12 : 24,
     UI_KEY: number + '|' + configured.flightDate + '|' + index,
     FLIGHT_NUMBER: number, FLIGHT_DATE: times.dateLabel(configured.flightDate),
     ORIGIN: departure.code !== '---' ? departure.code : legacy && legacy.ORIGIN || '---',
@@ -77,7 +79,7 @@ function toMessage(configured, record, legacy, index, count, generation, state) 
     BOOKING_CODE: booking.value, UI_BOOKING_STATE: booking.state,
     SEAT_NUMBER: seat.value, UI_SEAT_STATE: seat.state,
     SEAT_POSITION: (configured.seatPosition || '').toUpperCase(),
-    UI_UPDATED: record && isFinite(record.updatedAt) ? new Date(record.updatedAt).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : 'Never',
+    UI_UPDATED: record && isFinite(record.updatedAt) ? times.updatedLabel(record.updatedAt, timeFormat) : 'Never',
     UI_STALE: !hasRaw || state.stale || state.error ? 1 : 0,
     IS_LOADING: state.loading ? 1 : 0, ERROR_MESSAGE: state.error || '',
     NEXT_REFRESH_AT: legacy && legacy.NEXT_REFRESH_AT || '--'

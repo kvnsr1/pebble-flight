@@ -1,6 +1,6 @@
 {
   "name": "pebble-flight",
-  "version": "0.7.7",
+  "version": "0.7.8",
   "author": "Jetebble",
   "private": true,
   "keywords": [
@@ -96,7 +96,8 @@
       "UI_ARR_SCHEDULED_DATE": 66,
       "UI_DEP_SCHEDULED_ZONE": 67,
       "UI_ARR_SCHEDULED_ZONE": 68,
-      "GLANCE_PLAN": 69
+      "GLANCE_PLAN": 69,
+      "UI_TIME_FORMAT": 70
     },
     "resources": {
       "media": [

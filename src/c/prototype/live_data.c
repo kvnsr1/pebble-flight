@@ -61,6 +61,7 @@ static void inbox(DictionaryIterator *iter,void *context) {
     MESSAGE_KEY_AIRCRAFT_LEG_2_STATUS,MESSAGE_KEY_NEXT_REFRESH_AT
   };
   FlightPacket p={0};
+  p.twelve_hour=integer(iter,MESSAGE_KEY_UI_TIME_FORMAT,24)==12;
   p.count=integer(iter,MESSAGE_KEY_UI_COUNT,-1); p.index=integer(iter,MESSAGE_KEY_UI_INDEX,-1);
   p.generation=integer(iter,MESSAGE_KEY_UI_GENERATION,0);
   p.status=integer(iter,MESSAGE_KEY_UI_STATUS,FLIGHT_UNKNOWN);

@@ -3,7 +3,8 @@
 #include <stddef.h>
 
 enum { PAGE_LIST = -1, PAGE_OVERVIEW, PAGE_DEPARTURE, PAGE_ARRIVAL, PAGE_BOOKING };
-enum { VISIBLE_FLIGHTS = 3 };
+enum { VISIBLE_FLIGHTS = 2, FLIGHT_LIST_Y = 51, FLIGHT_ROW_HEIGHT = 76,
+       FLIGHT_CARD_HEIGHT = 72 };
 typedef struct {
   size_t selected;
   size_t top;

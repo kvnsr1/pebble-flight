@@ -175,8 +175,13 @@
       <h1>Jetebble</h1>
     </div>
   </header>
-  <p class="intro">Keep your next three trips on your wrist. Long-press Select to move between them.</p>
+  <p class="intro" id="intro">Keep up to five flights on your wrist. Use Up/Down on your watch to browse them.</p>
   <form id="settings">
+    <section class="key-panel" aria-labelledby="timeFormatLabel">
+      <label id="timeFormatLabel" for="timeFormat">Time format</label>
+      <select id="timeFormat"><option value="24H">24H — 14:30</option><option value="12H">12H — 2:30 PM</option></select>
+      <small id="timeFormatHelp">Applies to all flights and the app menu. Flight times stay local to each airport.</small>
+    </section>
     <div id="flights"></div>
     <section class="key-panel" aria-labelledby="apiKeyLabel">
       <label id="apiKeyLabel" for="apiKey">FlightAware AeroAPI key</label>
@@ -184,7 +189,7 @@
       <small id="keyHelp">Stored by the Pebble app on this phone—not in this page’s URL.</small>
       <p class="notice"><span class="live-dot" aria-hidden="true"></span>Refresh timing adapts as the next flight approaches.</p>
     </section>
-    <button id="saveButton" type="submit">Save flights &nbsp;→</button>
+    <button id="saveButton" type="submit">Save settings &nbsp;→</button>
   </form>
 </main>
 <script>
@@ -195,10 +200,18 @@
     catch (ignore) { initialState = {}; }
   }
   var flights = document.getElementById('flights');
+  // Older installed companions still cap saved/watch data at three flights.
+  var flightLimit = location.hash.indexOf('#state=') !== 0 || initialState.timeFormat ? 5 : 3;
+  if (flightLimit === 3) {
+    document.getElementById('timeFormat').disabled = true;
+    document.getElementById('timeFormatHelp').textContent = 'Update Jetebble on your watch to version 0.7.8 to enable five flights and 12H/24H.';
+    document.getElementById('intro').textContent = 'Manage your saved flights. Use Up/Down on your watch to browse them.';
+  }
+  document.getElementById('timeFormat').value = initialState.timeFormat === '12H' ? '12H' : '24H';
   var today = new Date();
   var localToday = new Date(today.getTime() - today.getTimezoneOffset() * 60000)
     .toISOString().slice(0, 10);
-  var accents = ['#42d7ff', '#ffd45c', '#59e391'];
+  var accents = ['#42d7ff', '#ffd45c', '#59e391', '#ff9bc8', '#b39aff'];
 
   function previewValue(value, fallback) {
     return value ? value.toUpperCase() : fallback;
@@ -253,7 +266,7 @@
     card.classList.toggle('is-active', Boolean(number || index === 1));
   }
 
-  for (var i = 1; i <= 3; i += 1) {
+  for (var i = 1; i <= flightLimit; i += 1) {
     var fieldset = document.createElement('fieldset');
     var savedFlight = initialState.flights && initialState.flights[i - 1] || {};
     var number = savedFlight.flightNumber || params.get('f' + i) ||
@@ -329,7 +342,7 @@
   document.getElementById('settings').addEventListener('submit', function(event) {
     event.preventDefault();
     var resultFlights = [];
-    for (var i = 1; i <= 3; i += 1) {
+    for (var i = 1; i <= flightLimit; i += 1) {
       var numberInput = document.getElementById('flightNumber' + i);
       var dateInput = document.getElementById('flightDate' + i);
       var bookingInput = document.getElementById('bookingCode' + i);
@@ -378,6 +391,7 @@
     }
     var result = {
       flights: resultFlights,
+      timeFormat: flightLimit === 5 ? document.getElementById('timeFormat').value : undefined,
       apiKey: document.getElementById('apiKey').value.trim()
     };
     document.getElementById('saveButton').textContent = 'Ready for takeoff  ✓';

@@ -1,5 +1,17 @@
 #include "motion.h"
 
+FlightHeaderPosition motion_flight_header(int row_y, int number_width, int progress) {
+  int p=motion_ease(progress);
+  int vertical=motion_ease(progress*2);
+  int horizontal=motion_ease((progress-500)*2);
+  FlightHeaderPosition position;
+  position.logo_x=motion_mix(12,86,p);
+  position.logo_y=motion_mix(row_y+3,66,p);
+  position.number_x=position.logo_x+motion_mix(32,12-number_width/2,horizontal);
+  position.number_y=position.logo_y+motion_mix(-1,25,vertical);
+  return position;
+}
+
 static int clamp(int n) { return n < 0 ? 0 : n > MOTION_UNIT ? MOTION_UNIT : n; }
 
 int motion_mix(int from, int to, int progress) {

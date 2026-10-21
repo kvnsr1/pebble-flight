@@ -3,8 +3,11 @@
 #include "airline_icons.h"
 #include <ctype.h>
 
-static GDrawCommandImage *s_icon;
-static uint32_t s_resource;
+// Five saved flights can expose several carriers in the same animation frame.
+// Retain their decoded PDCs instead of repeatedly replacing a single image.
+enum { CACHE_SIZE=5 };
+static struct { GDrawCommandImage *image; uint32_t resource, used; } s_icons[CACHE_SIZE];
+static uint32_t s_use;
 
 static bool carrier(const char *number, const char *prefix) {
   size_t length=strlen(prefix);
@@ -42,19 +45,30 @@ bool airline_icon_draw(GContext *ctx, const char *number, GPoint origin) {
     }
   }
   if (!resource) { return false; }
-  // Keep just the current carrier in RAM, and release it when switching carriers.
-  if (resource!=s_resource) {
-    airline_icons_deinit();
-    s_icon=gdraw_command_image_create_with_resource(resource);
-    if (s_icon) { s_resource=resource; }
+  unsigned slot=0;
+  for (unsigned i=0;i<CACHE_SIZE;i++) {
+    if (s_icons[i].resource==resource) {
+      s_icons[i].used=++s_use;
+      if (!s_icons[i].image) { return false; }
+      gdraw_command_image_draw(ctx,s_icons[i].image,origin);
+      return true;
+    }
+    if (s_icons[i].used<s_icons[slot].used) { slot=i; }
   }
-  if (!s_icon) { return false; }
-  gdraw_command_image_draw(ctx,s_icon,origin);
+  if (s_icons[slot].image) { gdraw_command_image_destroy(s_icons[slot].image); }
+  s_icons[slot].resource=resource;
+  s_icons[slot].used=++s_use;
+  s_icons[slot].image=gdraw_command_image_create_with_resource(resource);
+  if (!s_icons[slot].image) { return false; }
+  gdraw_command_image_draw(ctx,s_icons[slot].image,origin);
   return true;
 }
 
 void airline_icons_deinit(void) {
-  if (s_icon) { gdraw_command_image_destroy(s_icon); s_icon=NULL; }
-  s_resource=0;
+  for (unsigned i=0;i<CACHE_SIZE;i++) {
+    if (s_icons[i].image) { gdraw_command_image_destroy(s_icons[i].image); }
+    s_icons[i].image=NULL; s_icons[i].resource=0; s_icons[i].used=0;
+  }
+  s_use=0;
 }
 #endif

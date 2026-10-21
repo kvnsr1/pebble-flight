@@ -6,20 +6,20 @@ var DAY = 86400000;
 function epoch(value) { var n = Date.parse(value); return isFinite(n) && n > 0 ? n : 0; }
 function code(value) { return /^[A-Z0-9]{3,4}$/.test(value || '') ? value : '---'; }
 function number(value) { return String(value || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').slice(0, 12); }
-function timeLabel(raw, departure) {
+function timeLabel(raw, departure, timeFormat) {
   var airport = raw[departure ? 'origin' : 'destination'] || {};
   var suffix = departure ? 'out' : 'in';
   var value = raw['actual_' + suffix] || raw['estimated_' + suffix] || raw['scheduled_' + suffix];
   var local = times.local(value, airport.timezone);
   if (!local) { return 'Time unknown'; }
   var kind = raw['actual_' + suffix] ? 'ACT' : raw['estimated_' + suffix] ? 'EST' : 'SCHED';
-  return (departure ? 'DEP ' : 'ARR ') + kind + ' ' + local.format('HH:mm') + ' ' + local.zoneAbbr() +
+  return (departure ? 'DEP ' : 'ARR ') + kind + ' ' + local.format(times.clockPattern(timeFormat)) + ' ' + local.zoneAbbr() +
     ' ' + local.format('DD MMM').toUpperCase();
 }
 
 // No network requests. Native AppGlance slices persist after the app closes.
 // Expiring a schedule never asserts that the flight actually departed/landed.
-function plan(flights, rawCache, legacyCache, states, now) {
+function plan(flights, rawCache, legacyCache, states, now, timeFormat) {
   var candidates = [];
   flights.forEach(function(configured, index) {
     var key = configured.flightNumber + '|' + configured.flightDate;
@@ -39,7 +39,7 @@ function plan(flights, rawCache, legacyCache, states, now) {
     var airborne = Boolean(raw.actual_off), departed = Boolean(raw.actual_out);
     var status = ['Upcoming', 'Boarding', 'In flight', 'Landed', 'Delayed', 'Canceled', 'Diverted', 'Departed', 'Not updated'][
       record ? nativeView.toMessage(configured, record, legacy, index, flights.length, 0, {}).UI_STATUS : 8];
-    var detail = record ? timeLabel(raw, airborne || departed ? false : true) :
+    var detail = record ? timeLabel(raw, airborne || departed ? false : true, timeFormat) :
       times.dateLabel(configured.flightDate) + ' · Details not updated';
     var text = prefix + (record ? status + ' · ' : '') + detail;
     // Cached operational text must not persist indefinitely after its expected
@@ -60,7 +60,7 @@ function plan(flights, rawCache, legacyCache, states, now) {
     cursor = flight.end;
   });
   slices.push({expires: 0, text: flights.length ? 'No upcoming flights · Open to view all' : 'Add flights in phone settings'});
-  // At most 2 slices per saved flight (3) + the final empty-state slice (1).
+  // At most 2 slices per saved flight (5) + the final empty-state slice (1).
   return slices.map(function(slice) { return Math.floor(slice.expires / 1000) + '\t' + slice.text + '\n'; }).join('');
 }
 module.exports = {plan: plan};

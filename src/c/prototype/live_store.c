@@ -55,7 +55,7 @@ bool live_store_apply(LiveStore *s,const FlightPacket *p) {
   f->arrival.terminal.state=p->arr_terminal_state; f->arrival.facility.state=p->baggage_state;
   f->booking.code.state=p->booking_state; f->booking.seat.state=p->seat_state;
   f->booking.position=p->position; f->booking.position_override=p->position!=SEAT_UNKNOWN;
-  o->stale=p->stale; o->loading=p->loading; bind(o);
+  o->stale=p->stale; o->loading=p->loading; o->twelve_hour=p->twelve_hour; bind(o);
   s->received|=1U<<p->index;
   if (s->received!=((1U<<p->count)-1U)) { return false; }
   for (int i=0;i<p->count;i++) {
