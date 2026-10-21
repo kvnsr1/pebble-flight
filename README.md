@@ -65,6 +65,13 @@ and companion-to-watch test coverage.
 
 ## CloudPebble
 
+If a GitHub pull reports **Too many files in project**, pull the latest `main`
+again. The repository's `.gitattributes` excludes generated preview folders from
+GitHub source ZIPs to stay below CloudPebble's 400-file import limit. The captures
+remain available in this repository; code, resources, Markdown guides and licenses
+are retained in the archive. Check the archive with
+`python3 scripts/check-cloudpebble-archive.py`.
+
 1. Sign in to [CloudPebble](https://cloudpebble.repebble.com/).
 2. Import `https://github.com/kvnsr1/pebble-flight`, branch **`main`**, into a
    new project. This is recommended if your existing project is Flight Preview.
