@@ -1,6 +1,9 @@
 # Validation — Pebble Flight 0.7.0
 
-Current version: [Jetebble 0.7.6 live lookup fix and validation](LIVE_LOOKUP_FIX.md).
+Current version: [Jetebble 0.7.10 merged motion and startup verification](RELEASE_0.7.10.md).
+Previous update: [Jetebble 0.7.9 cloud transition and validation](STARTUP_CLOUD_TRANSITION.md).
+Previous feature update: [Jetebble 0.7.8 settings and cards](SETTINGS_AND_CARDS.md).
+Previous fix: [Jetebble 0.7.6 live lookup fix and validation](LIVE_LOOKUP_FIX.md).
 Previous design update: [Jetebble 0.7.5 Overview validation and preview](OVERVIEW_MOCKUP.md).
 Previous version: [Jetebble 0.7.4 validation and installation](JETEBBLE.md).
 The following records the original 0.7.0 promotion checks.

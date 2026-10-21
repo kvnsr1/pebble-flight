@@ -29,3 +29,6 @@ cc -std=c99 -Wall -Wextra -Werror test/glance_plan.test.c \
 cc -std=c99 -Wall -Wextra -Werror test/live_store.test.c \
   src/c/prototype/live_store.c -o "$TEST_BINARY"
 "$TEST_BINARY"
+cc -Itest/pebble-stub -std=c99 -Wall -Wextra -Werror test/watch-glance.test.c \
+  src/c/prototype/glance_plan.c -o "$TEST_BINARY"
+"$TEST_BINARY"

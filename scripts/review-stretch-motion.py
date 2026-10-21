@@ -9,7 +9,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 ROOT=Path(__file__).resolve().parents[1]
-parser=argparse.ArgumentParser();parser.add_argument('--format',choices=['24H','12H'],default='24H');args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--format',choices=['24H','12H'],default='24H');parser.add_argument('--output',default='docs/stretch-motion');args=parser.parse_args()
 spec=importlib.util.spec_from_file_location('capture',ROOT/'scripts/review-motion.py')
 c=importlib.util.module_from_spec(spec);spec.loader.exec_module(c)
 from libpebble2.protocol.logs import AppLogMessage,AppLogShippingControl
@@ -22,7 +22,7 @@ c.connection.send_packet(AppLogShippingControl(enable=True))
 original_click=c.click
 def settled_click(button,duration=40,settle=.55):return original_click(button,duration,settle)
 c.click=settled_click
-c.OUT=ROOT/'docs/stretch-motion'/args.format.lower();c.OUT.mkdir(parents=True,exist_ok=True)
+c.OUT=ROOT/args.output/args.format.lower();c.OUT.mkdir(parents=True,exist_ok=True)
 
 def main():
     c.time.sleep(4) # Wait for the 3.3s startup after SDK installation.

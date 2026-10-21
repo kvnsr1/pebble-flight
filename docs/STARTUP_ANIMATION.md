@@ -1,5 +1,9 @@
 # Jetteble startup animation
 
+Version 0.7.9 adds the approved [cloud-transition revision](STARTUP_CLOUD_TRANSITION.md):
+a playful bottom-up cloud lift and fade into the app. The original 0.7.7 sequence
+and evidence remain below as design history.
+
 Approved for Jetebble **0.7.7**, based on the 0.7.6 source.
 The animation uses the title **Jetteble**, exactly as requested;
 the existing app/launcher name remains Jetebble.

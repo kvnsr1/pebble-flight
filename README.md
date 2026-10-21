@@ -1,16 +1,24 @@
 # Jetebble
 
-**Unpublished motion review:** local branch `codex/stretch-flight-motion` adds
-stretch-and-scale flight opening and a lighter card-focus effect. See
-[the native preview, CloudPebble ZIP instructions and validation](docs/STRETCH_MOTION.md).
-This work has not been pushed to GitHub or deployed to the hosted settings.
+**Version 0.7.10** adds the approved [stretch and scale flight transitions](docs/STRETCH_MOTION.md)
+and a lighter card-focus effect when browsing flights. It retains the rising-cloud
+startup from 0.7.9 and the CloudPebble archive file-limit fix.
+
+**Version 0.7.9** adds the approved [rising-cloud startup transition](docs/STARTUP_CLOUD_TRANSITION.md).
+After the plane and title sequence, a playful cloud lift fades into the current
+flight list. The four-second intro can be skipped with any button. It includes
+the five-flight settings, clock format, and animated cards from 0.7.8.
+
+Use **`main`** and rebuild for the latest approved version. Local production
+build: `python3 scripts/build-startup-preview.py --production-check`, producing
+`build/jetebble-0.7.10.pbw` and `build/pebble-flight.pbw`.
 
 **Version 0.7.8** adds up to **five saved flights**, a global **24H / 12H**
 setting, and larger All Flights cards with an airline-logo/flight-number eyebrow,
 bold route and date/status row. The logo and number move together into Overview
 and back. See [the update, actual emulator previews and validation](docs/SETTINGS_AND_CARDS.md).
-Use branch **`main`** for the approved update. Rebuild and install version 0.7.8,
-then reopen Jetebble's phone settings to enable five flights and the time-format
+These settings require version 0.7.8 or newer. Reopen Jetebble's phone settings
+after installation to enable five flights and the time-format
 selector. Older installed versions retain the three-flight settings view.
 
 **Version 0.7.7** adds the approved [plane, clouds, and title startup animation](docs/STARTUP_ANIMATION.md).
@@ -60,6 +68,13 @@ See [the sync-fix validation](docs/LIVE_SYNC_FIX.md) for the reproduced failure
 and companion-to-watch test coverage.
 
 ## CloudPebble
+
+If a GitHub pull reports **Too many files in project**, pull the latest `main`
+again. The repository's `.gitattributes` excludes generated preview folders from
+GitHub source ZIPs to stay below CloudPebble's 400-file import limit. The captures
+remain available in this repository; code, resources, Markdown guides and licenses
+are retained in the archive. Check the archive with
+`python3 scripts/check-cloudpebble-archive.py`.
 
 1. Sign in to [CloudPebble](https://cloudpebble.repebble.com/).
 2. Import `https://github.com/kvnsr1/pebble-flight`, branch **`main`**, into a

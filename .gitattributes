@@ -1,0 +1,7 @@
+# CloudPebble imports GitHub's ZIP archive and caps project files at 400.
+# Keep review evidence in Git/GitHub, without adding it to source archives.
+/docs/* export-ignore
+# Keep the reusable Markdown guides and third-party attribution in archives.
+/docs/*.md -export-ignore
+/docs/licenses -export-ignore
+/docs/licenses/** -export-ignore

@@ -1,9 +1,10 @@
-# Unpublished stretch-motion review
+# Stretch motion — Jetebble 0.7.10
 
-Local branch **`codex/stretch-flight-motion`**, based on approved Jetebble 0.7.8
-(`36c1be6`). No GitHub push, Pages deployment or appstore release is included.
-The isolated worktree preserves the separate startup-cloud edits in the original
-checkout. Native C, SDK 3 metadata and the sole Emery 200×228 target are retained.
+Approved for **main** in Jetebble **0.7.10**. The reviewed motion from
+`codex/stretch-flight-motion` is merged with main `86d4738`, retaining the 0.7.9
+rising-cloud startup and CloudPebble archive fix. Native C, SDK 3 metadata and
+Emery 200×228 remain unchanged. See [the combined release verification](RELEASE_0.7.10.md).
+No appstore release is included.
 
 ## Motion specification
 
@@ -68,10 +69,13 @@ It is a compile-time review option, not a new phone preference.
 
 ## CloudPebble review
 
-The branch is local only, so use the generated **source ZIP** rather than a
-GitHub import. Import `build/jetebble-stretch-12h-source.zip` into a new
-**Pebble C SDK** project, keep **SDK metadata 3**, then **Build & Run → Emulator →
-Emery / Pebble Time 2**. The project is a native, interactive app.
+For the approved live app, pull **main** from `kvnsr1/pebble-flight` into your
+linked CloudPebble project. Keep **Pebble C SDK**, **SDK metadata 3** and **Emery /
+Pebble Time 2**. Compile, verify version **0.7.10**, then run on Emery or install
+through **Build & Run → Phone**.
+
+The optional `build/jetebble-stretch-12h-source.zip` remains available for offline
+review in a separate Pebble C SDK project.
 
 The separate **Jetebble Motion** UUID is
 `b9d81999-5940-4b69-9c76-b883fb2dc10c`. Mock mode is enabled and the companion is
@@ -102,7 +106,10 @@ artwork uses synthetic flight ZZ42 in slot five. `--production` only compiles th
 normal live configuration, preserving its UUID and live default; its output is
 `jetebble-stretch-production-check.pbw`. It does not install or publish it.
 
-## Validation
+## Original prototype validation
+
+The following records the isolated review before merging the 0.7.9 startup.
+Combined 0.7.10 checks are recorded in [the release verification](RELEASE_0.7.10.md).
 
 Validated locally on October 21, 2026 with **SDK 4.33.1 / Pebble Tool 5.0.40**.
 
@@ -136,6 +143,7 @@ neighbor sampling; no intermediate motion frames were synthesized.
 
 Physical-watch timing, battery, authenticated CloudPebble import/build and
 credentialed live service behavior remain untested. The phone settings, API
-integration, cache, five-flight limit, 12H/24H preference and published app are
-unchanged by this motion work. Live packets arriving during a stretch transition
-were not exercised in this review; their existing cancellation callback is retained.
+integration, cache, five-flight limit and 12H/24H preference remain unchanged.
+The approved motion is included in the normal app. Live packets arriving during
+a stretch transition were not exercised in this review; their existing
+cancellation callback is retained.

@@ -1,0 +1,37 @@
+{
+  "capture": "Native Emery QEMU framebuffer, SDK color correction",
+  "size": [
+    200,
+    228
+  ],
+  "title": "Jetteble",
+  "font": "FONT_KEY_GOTHIC_28_BOLD",
+  "duration_ms": 4000,
+  "frames": 116,
+  "plane_x_samples": [
+    25.233624454148472,
+    85.23362445414847,
+    153.23362445414847
+  ],
+  "transition": "staggered bottom-up cloud lift with native alpha dissolve",
+  "provider_requests": 0,
+  "checks": [
+    "Native intermediate frames captured",
+    "Title holds still before the final cloud lift",
+    "Native title remains pixel-exact when the alpha surface takes over",
+    "Intro hands off to an idle mock flight list",
+    "Fade reaches the exact app frame before overlay removal",
+    "Clouds reveal the actual app progressively from the bottom",
+    "Rounded clouds enter from below and travel upward across the screen",
+    "Plane travels left to right through three measured positions",
+    "up skips during flight without hidden navigation",
+    "down skips during flight without hidden navigation",
+    "select skips during flight without hidden navigation",
+    "back skips during flight without hidden navigation",
+    "up skips during cloud exit without hidden navigation",
+    "down skips during cloud exit without hidden navigation",
+    "select skips during cloud exit without hidden navigation",
+    "back skips during cloud exit without hidden navigation",
+    "Back from flight restores list without replaying intro"
+  ]
+}

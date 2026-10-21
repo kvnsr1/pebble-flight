@@ -128,6 +128,7 @@ void live_data_deinit(void) {
   if (s_heartbeat) { app_timer_cancel(s_heartbeat); }
   if (s_connect_timer) { app_timer_cancel(s_connect_timer); }
   app_message_deregister_callbacks(); connection_service_unsubscribe();
+  watch_glance_deinit();
 }
 size_t live_flight_count(void) { return s_store.count; }
 const Flight *live_flight_at(size_t index) { return index<(size_t)s_store.count?&s_store.flights[index].flight:NULL; }

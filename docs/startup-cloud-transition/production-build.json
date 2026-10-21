@@ -1,0 +1,28 @@
+{
+  "version": "0.7.9",
+  "date": "2026-10-21",
+  "platform": "emery",
+  "sdk": "4.33.1",
+  "uuid": "e6fc90f6-5f5a-4f34-a18e-76f13a5b2327",
+  "configuration": {
+    "mock_data": false,
+    "legacy_ui": false,
+    "startup_review": false
+  },
+  "bundle": "build/jetebble-0.7.9.pbw",
+  "bytes": 3394945,
+  "sha256": "6199fa12664cfbca1a7cb1a4afb0d8e9b508f70a98e96f59106be3e3a9ff7973",
+  "build_report": {
+    "resources_bytes": 16487,
+    "static_ram_footprint_bytes": 63397,
+    "heap_available_before_runtime_allocations_bytes": 67675
+  },
+  "checks": [
+    "Full scripts/test.sh suite passed",
+    "Production and canonical bundle byte-for-byte identical",
+    "Embedded version, UUID, target and production JS verified"
+  ],
+  "emulator_evidence": "validation.json",
+  "emulator_check_count": 17,
+  "physical_watch_tested": false
+}
