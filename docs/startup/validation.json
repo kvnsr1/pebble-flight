@@ -1,0 +1,28 @@
+{
+  "capture": "Native Emery QEMU framebuffer, SDK color correction",
+  "size": [
+    200,
+    228
+  ],
+  "title": "Jetteble",
+  "font": "FONT_KEY_GOTHIC_28_BOLD",
+  "duration_ms": 3300,
+  "frames": 97,
+  "plane_x_samples": [
+    25.233624454148472,
+    94.23362445414847,
+    154.23362445414847
+  ],
+  "provider_requests": 0,
+  "checks": [
+    "Native intermediate frames captured",
+    "Title holds still after clouds clear",
+    "Intro hands off to an idle mock flight list",
+    "Plane travels left to right through three measured positions",
+    "up skips intro without navigating behind it",
+    "down skips intro without navigating behind it",
+    "select skips intro without navigating behind it",
+    "back skips intro without navigating behind it",
+    "Back from flight restores list without replaying intro"
+  ]
+}

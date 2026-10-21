@@ -8,6 +8,7 @@
 #include "airline_icons.h"
 #include "live_data.h"
 #include "motion.h"
+#include "startup.h"
 
 static Window *s_window;
 static Layer *s_canvas;
@@ -762,18 +763,21 @@ static PrototypeNavigation before_navigation(void) {
   return s_nav;
 }
 static void up(ClickRecognizerRef r, void *c) {
+  if (startup_dismiss()) { return; }
 #if !PEBBLE_MOCK_DATA
   if (s_aircraft) { return; }
 #endif
   PrototypeNavigation before = before_navigation();
   navigation_move(&s_nav,-1,data_count()); motion_start(before,false); changed(); }
 static void down(ClickRecognizerRef r, void *c) {
+  if (startup_dismiss()) { return; }
 #if !PEBBLE_MOCK_DATA
   if (s_aircraft) { return; }
 #endif
   PrototypeNavigation before = before_navigation();
   navigation_move(&s_nav,1,data_count()); motion_start(before,false); changed(); }
 static void select_click(ClickRecognizerRef r, void *c) {
+  if (startup_dismiss()) { return; }
   PrototypeNavigation before = before_navigation();
   bool aircraft = aircraft_showing();
 #if !PEBBLE_MOCK_DATA
@@ -786,6 +790,10 @@ static void select_click(ClickRecognizerRef r, void *c) {
 #endif
 }
 static void long_select(ClickRecognizerRef r, void *c) {
+  if (startup_dismiss()) { return; }
+#if PEBBLE_STARTUP_REVIEW
+  if (s_nav.page == PAGE_LIST) { startup_show(window_get_root_layer(s_window)); return; }
+#endif
 #if PEBBLE_MOCK_DATA
   PrototypeNavigation before = before_navigation();
   if (s_nav.page == PAGE_LIST) { navigation_toggle_empty(&s_nav); motion_start(before,false); changed(); }
@@ -798,6 +806,7 @@ static void long_select(ClickRecognizerRef r, void *c) {
 #endif
 }
 static void back(ClickRecognizerRef r, void *c) {
+  if (startup_dismiss()) { return; }
   PrototypeNavigation before = before_navigation();
   bool aircraft = aircraft_showing();
 #if !PEBBLE_MOCK_DATA
@@ -890,8 +899,9 @@ static void window_load(Window *window) {
   layer_add_child(root,s_hero);
 }
 static void window_appear(Window *window) { s_visible = true; activity_sync(); }
-static void window_disappear(Window *window) { s_visible = false; motion_stop(); feedback_stop(); activity_sync(); }
+static void window_disappear(Window *window) { startup_dismiss(); s_visible = false; motion_stop(); feedback_stop(); activity_sync(); }
 static void window_unload(Window *window) {
+  startup_destroy();
   motion_stop(); feedback_stop();
 #if PEBBLE_MOCK_DATA && PEBBLE_MOTION_DEMO
   if (s_demo_timer) { app_timer_cancel(s_demo_timer); s_demo_timer = NULL; }
@@ -911,6 +921,7 @@ int main(void) {
   window_set_window_handlers(s_window,(WindowHandlers){.load=window_load,.unload=window_unload,
     .appear=window_appear,.disappear=window_disappear});
   window_stack_push(s_window,true);
+  startup_show(window_get_root_layer(s_window));
 #if !PEBBLE_MOCK_DATA
   s_actions_window=window_create();
   window_set_window_handlers(s_actions_window,(WindowHandlers){.load=actions_load,.unload=actions_unload});

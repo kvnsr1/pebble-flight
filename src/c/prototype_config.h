@@ -13,3 +13,8 @@
 #ifndef PEBBLE_MOTION_DEMO
 #define PEBBLE_MOTION_DEMO 0
 #endif
+
+// Only the isolated offline review package allows replay from the flight list.
+#ifndef PEBBLE_STARTUP_REVIEW
+#define PEBBLE_STARTUP_REVIEW 0
+#endif

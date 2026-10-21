@@ -1,5 +1,12 @@
 # Jetebble
 
+**Version 0.7.7** adds the approved [plane, clouds, and title startup animation](docs/STARTUP_ANIMATION.md).
+Any button skips the intro; the existing app continues underneath it. An isolated
+offline review build can replay the sequence.
+
+[Pebble motion resources and build guidelines](docs/PEBBLE_MOTION_GUIDE.md) collects
+the SDK references, tools, examples, and workflow for future Codex builds.
+
 **Version 0.7.6** fixes future-flight lookups that returned HTTP 400 because the
 date range exceeded AeroAPI's live window. Overview now shows **NA** inside the
 circle when progress is unknown. See [the fix and validation](docs/LIVE_LOOKUP_FIX.md).
